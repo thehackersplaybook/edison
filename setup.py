@@ -9,7 +9,7 @@ with open("README.md", "r") as fh:
 setup(
     name="edison",
     version="0.0.1",
-    packages=find_packages(),
+    packages=find_packages(exclude=["tests*", "e2e*"]),
     install_requires=[
         "python-dotenv>=1.0.1",
         "pydantic>=2.10.6",
@@ -17,6 +17,12 @@ setup(
         "openai>=1.61.1",
         "argparse>=1.4.0",
     ],
+    extras_require={
+        "dev": [
+            "pytest>=7.0.0",
+            "pytest-cov>=4.0.0",
+        ],
+    },
     author="Aditya Patange (AdiPat)",
     author_email="contact.adityapatange@gmail.com",
     description="A simple, effective and powerful package to integrate Deep Research capabilities in Python.",
