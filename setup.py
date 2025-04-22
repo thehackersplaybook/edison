@@ -15,6 +15,7 @@ setup(
         "pydantic>=2.10.6",
         "rich>=13.9.4",
         "openai>=1.61.1",
+        "openai-agents>=0.0.11",
         "argparse>=1.4.0",
     ],
     extras_require={

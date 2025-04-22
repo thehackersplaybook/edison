@@ -4,3 +4,4 @@ rich>=13.9.4
 openai>=1.61.1
 setuptools>=75.8.0
 argparse>=1.4.0
+openai-agents>=0.0.11
