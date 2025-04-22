@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 from pydantic import BaseModel
-from agents import set_default_openai_key, Agent, WebSearchTool
+from agents import set_default_openai_key, Agent, WebSearchTool, Runner
 from .edison_agents import EdisonAgents, AgentType
 
 
@@ -89,10 +89,22 @@ class EdisonDeepResearch:
             tools=[WebSearchTool()],
         )
 
+        self.agents.expander_agent = Agent(
+            name="EdisonDeepResearch: Query Expander Agent",
+            instructions="""
+                You are an AI agent that expands the query provided to you.
+                You will be provided with a query and you need to expand it.
+            """,
+            model=DEFAULT_LLM_MODEL,
+        )
+
         self.agents.set_agent(AgentType.TASKS_AGENT, self.agents.tasks_agent)
         self.agents.set_agent(AgentType.QNA_AGENT, self.agents.qna_agent)
         self.agents.set_agent(AgentType.SUMMARIZER_AGENT, self.agents.summarizer_agent)
         self.agents.set_agent(AgentType.GENERATOR_AGENT, self.agents.generator_agent)
+        self.agents.set_agent(
+            AgentType.QUERY_EXPANDER_AGENT, self.agents.expander_agent
+        )
         print("Agents initialized successfully.")
 
     def are_agents_initialized(self):

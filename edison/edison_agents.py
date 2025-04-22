@@ -11,6 +11,7 @@ class AgentType(Enum):
     QNA_AGENT = "qna_agent"
     SUMMARIZER_AGENT = "summarizer_agent"
     GENERATOR_AGENT = "generator_agent"
+    QUERY_EXPANDER_AGENT = "query_expander_agent"
 
 
 class EdisonAgents:
@@ -26,6 +27,7 @@ class EdisonAgents:
         self.qna_agent = None
         self.summarizer_agent = None
         self.generator_agent = None
+        self.expander_agent = None
 
     def set_agent(self, agent_type: AgentType, agent: Agent) -> None:
         """
@@ -39,6 +41,8 @@ class EdisonAgents:
             self.summarizer_agent = agent
         elif agent_type == AgentType.GENERATOR_AGENT:
             self.generator_agent = agent
+        elif agent_type == AgentType.QUERY_EXPANDER_AGENT:
+            self.expander_agent = agent
         else:
             raise ValueError(f"Invalid agent type: {agent_type}")
 
@@ -54,6 +58,8 @@ class EdisonAgents:
             return self.summarizer_agent
         elif agent_type == AgentType.GENERATOR_AGENT:
             return self.generator_agent
+        elif agent_type == AgentType.QUERY_EXPANDER_AGENT:
+            return self.expander_agent
         else:
             raise ValueError(f"Invalid agent type: {agent_type}")
 
@@ -67,4 +73,5 @@ class EdisonAgents:
             and self.qna_agent is not None
             and self.summarizer_agent is not None
             and self.generator_agent is not None
+            and self.expander_agent is not None
         )
