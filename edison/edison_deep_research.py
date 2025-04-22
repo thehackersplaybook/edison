@@ -107,9 +107,6 @@ class EdisonDeepResearch:
         Get the initialized agents.
         :return: The initialized agents.
         """
-        if not self.are_agents_initialized():
-            print("Agents are not initialized. Initializing now...")
-            self.init_agents()
         return self.agents
 
     def _validate_api_keys(self):

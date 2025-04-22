@@ -1,5 +1,4 @@
 import pytest
-import os
 from edison.edison_deep_research import EdisonDeepResearch, EdisonApiKeyConfig
 
 
@@ -26,6 +25,32 @@ def test_edison_deep_research_initialization():
     """Test basic initialization of EdisonDeepResearch"""
     research = EdisonDeepResearch()
     assert isinstance(research, EdisonDeepResearch)
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    "openai_key,firecrawl_key,serper_key",
+    [
+        ("", "", ""),  # all empty
+        ("valid-key", "", ""),  # only openai
+        ("", "valid-key", ""),  # only firecrawl
+        ("", "", "valid-key"),  # only serper
+        ("valid-key", "valid-key", ""),  # missing serper
+        ("valid-key", "", "valid-key"),  # missing firecrawl
+        ("", "valid-key", "valid-key"),  # missing openai
+    ],
+)
+def test_edison_initialization_with_invalid_config(
+    openai_key, firecrawl_key, serper_key
+):
+    """Test initialization with various invalid API key configurations"""
+    invalid_config = EdisonApiKeyConfig(
+        openai_api_key=openai_key,
+        firecrawl_api_key=firecrawl_key,
+        serper_api_key=serper_key,
+    )
+    with pytest.raises(ValueError, match="Invalid API keys provided"):
+        EdisonDeepResearch(api_key_config=invalid_config)
 
 
 @pytest.mark.unit
