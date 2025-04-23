@@ -1,33 +1,44 @@
+"""Edison Deep Research module.
+
+This module provides deep research capabilities by utilizing multiple AI agents
+to analyze, question, summarize and generate information from queries.
+
+Author: Aditya Patange (https://www.github.com/AdiPat)
+"""
+
 import os
 from dotenv import load_dotenv
-from pydantic import BaseModel
-from agents import set_default_openai_key, Agent, WebSearchTool, Runner
-from .edison_agents import EdisonAgents, AgentType
+from agents import set_default_openai_key
+from .edison_agents import EdisonAgents
+from .query_expander import QueryExpander
+from .qna_engine import QnaEngine
+from .models import EdisonApiKeyConfig
 
 
 DEFAULT_QNA_MODEL = "gpt-4o"
 DEFAULT_LLM_MODEL = "gpt-4o"
 
 
-class EdisonApiKeyConfig(BaseModel):
-    """
-    Configuration class for Edison API key.
-    """
-
-    openai_api_key: str
-    firecrawl_api_key: str
-    serper_api_key: str
-
-
 class EdisonDeepResearch:
-    """
-    A simple, effective and powerful deep research module.
+    """A class to handle deep research operations using multiple specialized AI agents.
+
+    This class manages multiple AI agents that work together to perform deep research
+    on given queries through questioning, summarizing, and information generation.
+
+    Attributes:
+        api_key_config (EdisonApiKeyConfig): Configuration containing required API keys.
+        agents (EdisonAgents): Collection of specialized AI agents used for research.
     """
 
     def __init__(self, api_key_config: EdisonApiKeyConfig = None):
-        """
-        Initialize the EdisonDeepResearch class.
-        :param api_key_config: Configuration object containing API keys.
+        """Initialize the EdisonDeepResearch instance.
+
+        Args:
+            api_key_config (EdisonApiKeyConfig, optional): Configuration object containing API keys.
+                If not provided, keys are loaded from environment variables.
+
+        Raises:
+            ValueError: If the provided API keys are invalid or missing.
         """
         if api_key_config:
             self.api_key_config = api_key_config
@@ -46,85 +57,32 @@ class EdisonDeepResearch:
 
         set_default_openai_key(self.api_key_config.openai_api_key)
         self.agents = EdisonAgents()
-        self.init_agents()
+        self.agents.init_agents()
 
-    def init_agents(self):
-        """
-        Initialize the agents for deep research.
-        """
-        self.agents.tasks_agent = Agent(
-            name="EdisonDeepResearch: Task Agent",
-            instructions="""
-                You are an AI agent that performs tasks based on the query provided to you.
-                You will be provided with a query and you need to perform the task.
-            """,
-            model=DEFAULT_QNA_MODEL,
-        )
-
-        self.agents.qna_agent = Agent(
-            name="EdisonDeepResearch: Questioning Agent",
-            instructions="""
-                You are an AI agent that asks more questions regarding a topic or query to get more information.
-                You will be provided with a query and you need to ask more questions to get more information.
-            """,
-            model=DEFAULT_LLM_MODEL,
-        )
-
-        self.agents.summarizer_agent = Agent(
-            name="EdisonDeepResearch: Summarizer Agent",
-            instructions="""
-                You are an AI agent that summarizes the information provided to you.
-                You will be provided with a query and you need to summarize the information.
-            """,
-            model=DEFAULT_LLM_MODEL,
-        )
-
-        self.agents.generator_agent = Agent(
-            name="EdisonDeepResearch: Generator Agent",
-            instructions="""
-                You are an AI agent that generates information based on the query provided to you.
-                You will be provided with a query and you need to generate information.
-            """,
-            model=DEFAULT_LLM_MODEL,
-            tools=[WebSearchTool()],
-        )
-
-        self.agents.expander_agent = Agent(
-            name="EdisonDeepResearch: Query Expander Agent",
-            instructions="""
-                You are an AI agent that expands the query provided to you.
-                You will be provided with a query and you need to expand it.
-            """,
-            model=DEFAULT_LLM_MODEL,
-        )
-
-        self.agents.set_agent(AgentType.TASKS_AGENT, self.agents.tasks_agent)
-        self.agents.set_agent(AgentType.QNA_AGENT, self.agents.qna_agent)
-        self.agents.set_agent(AgentType.SUMMARIZER_AGENT, self.agents.summarizer_agent)
-        self.agents.set_agent(AgentType.GENERATOR_AGENT, self.agents.generator_agent)
-        self.agents.set_agent(
-            AgentType.QUERY_EXPANDER_AGENT, self.agents.expander_agent
-        )
-        print("Agents initialized successfully.")
+        self._query_expander = QueryExpander(agents=self.agents)
+        self._qna_engine = QnaEngine(agents=self.agents)
 
     def are_agents_initialized(self):
-        """
-        Check if the agents are initialized.
-        :return: True if agents are initialized, False otherwise.
+        """Check if all required agents are properly initialized.
+
+        Returns:
+            bool: True if agents are initialized, False otherwise.
         """
         return self.agents.are_agents_initialized()
 
     def get_agents(self) -> EdisonAgents:
-        """
-        Get the initialized agents.
-        :return: The initialized agents.
+        """Get the collection of initialized agents.
+
+        Returns:
+            EdisonAgents: The initialized agents collection.
         """
         return self.agents
 
     def _validate_api_keys(self):
-        """
-        Validate the API keys.
-        :return: True if all API keys are valid, False otherwise.
+        """Validate the required API keys.
+
+        Returns:
+            bool: True if all API keys are valid, False otherwise.
         """
         if not self.api_key_config.openai_api_key:
             print("OpenAI API key is missing.")
@@ -138,18 +96,29 @@ class EdisonDeepResearch:
         return True
 
     def _generate_questions(self, query: str):
-        """
-        Generate questions based on the given query.
-        :param query: The query to generate questions for.
-        :return: A list of generated questions.
+        """Generate follow-up questions based on the given query.
+
+        Args:
+            query (str): The query to generate questions for.
+
+        Returns:
+            List[str]: A list of generated questions.
         """
         pass
 
     def deep(self, query: str, model: str = DEFAULT_LLM_MODEL):
+        """Perform deep research on the given query.
+
+        Args:
+            query (str): The query to research.
+            model (str, optional): The model to use for research. Defaults to DEFAULT_LLM_MODEL.
+
+        Returns:
+            Any: The result of the deep research.
         """
-        Perform a deep research on the given query using the specified model.
-        :param query: The query to research.
-        :param model: The model to use for research.
-        :return: The result of the deep research.
-        """
+        print(f"Performing deep research on query: {query}")
+        expanded_queries = self._query_expander.expand_query(query)
+        print(f"Expanded queries: {expanded_queries}")
+        qna_pairs = self._qna_engine.generate_qna(queries=expanded_queries)
+        print(f"QnA pairs: {qna_pairs}")
         pass

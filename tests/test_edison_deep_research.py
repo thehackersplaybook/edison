@@ -93,3 +93,4 @@ def test_agents_initialization(valid_api_config):
     assert agents.qna_agent is not None
     assert agents.summarizer_agent is not None
     assert agents.generator_agent is not None
+    assert agents.query_expander_agent is not None
