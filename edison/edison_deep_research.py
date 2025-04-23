@@ -95,17 +95,6 @@ class EdisonDeepResearch:
             return False
         return True
 
-    def _generate_questions(self, query: str):
-        """Generate follow-up questions based on the given query.
-
-        Args:
-            query (str): The query to generate questions for.
-
-        Returns:
-            List[str]: A list of generated questions.
-        """
-        pass
-
     def deep(self, query: str, model: str = DEFAULT_LLM_MODEL):
         """Perform deep research on the given query.
 
