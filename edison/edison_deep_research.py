@@ -7,6 +7,7 @@ Author: Aditya Patange (https://www.github.com/AdiPat)
 """
 
 import os
+import traceback
 from typing import AsyncGenerator
 from dotenv import load_dotenv
 from openai.types.responses import ResponseTextDeltaEvent
@@ -112,7 +113,6 @@ class EdisonDeepResearch:
             result: RunResultStreaming = Runner.run_streamed(
                 orchestrator_agent,
                 input=f"Deep research on: '{query}'",
-                model=model,
             )
 
             yield "=== Deep Research Starting ===\n"
@@ -136,4 +136,5 @@ class EdisonDeepResearch:
 
         except Exception as e:
             print(f"Error during deep research: {e}")
+            traceback.print_exc()
             yield f"Deep research failed for query='{query}'. Please try again later."
