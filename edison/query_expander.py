@@ -45,7 +45,7 @@ class QueryExpander:
         """
         try:
             result = Runner.run_sync(
-                self.agents.expander_agent,
+                self.agents.query_expander_agent, f"Query: {query}"
             )
             expander_agent_output: ExpanderAgentOutput = result.final_output
             return expander_agent_output.related_queries
@@ -68,7 +68,7 @@ class QueryExpander:
         """
         try:
             result = await Runner.run(
-                self.agents.expander_agent,
+                self.agents.query_expander_agent, f"Query: {query}"
             )
             expander_agent_output: ExpanderAgentOutput = result.final_output
             return expander_agent_output.related_queries

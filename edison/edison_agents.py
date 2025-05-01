@@ -22,6 +22,8 @@ from enum import Enum
 from .models import ExpanderAgentOutput, QnaAgentOutput
 from typing import Dict, Optional, List, Type, Any
 from pydantic import BaseModel
+from .edison_tools import EdisonTools
+from .models import ToolType
 
 DEFAULT_LLM_MODEL = "gpt-4o"
 DEFAULT_QNA_MODEL = "gpt-4o"
@@ -36,6 +38,7 @@ class AgentType(Enum):
         SUMMARIZER_AGENT: Provides concise summaries
         GENERATOR_AGENT: Creates content and information
         QUERY_EXPANDER_AGENT: Expands search queries for broader coverage
+        DOCUMENT_WRITER_AGENT: Manages document content with versioning and organization
     """
 
     TASKS_AGENT = "tasks_agent"
@@ -43,6 +46,7 @@ class AgentType(Enum):
     SUMMARIZER_AGENT = "summarizer_agent"
     GENERATOR_AGENT = "generator_agent"
     QUERY_EXPANDER_AGENT = "query_expander_agent"
+    DOCUMENT_WRITER_AGENT = "document_writer_agent"
 
 
 class AgentConfig(BaseModel):
@@ -80,9 +84,7 @@ AGENT_CONFIGS: Dict[AgentType, AgentConfig] = {
         """,
         model=DEFAULT_LLM_MODEL,
         output_type=QnaAgentOutput,
-        tools=[
-            WebSearchTool(),
-        ],
+        tools=[ToolType.WEB_SEARCH],
     ),
     AgentType.SUMMARIZER_AGENT: AgentConfig(
         name="EdisonDeepResearch: Summarizer Agent",
@@ -99,7 +101,7 @@ AGENT_CONFIGS: Dict[AgentType, AgentConfig] = {
             You will be provided with a query and you need to generate information.
         """,
         model=DEFAULT_LLM_MODEL,
-        tools=[WebSearchTool()],
+        tools=[ToolType.WEB_SEARCH],
     ),
     AgentType.QUERY_EXPANDER_AGENT: AgentConfig(
         name="EdisonDeepResearch: Query Expander Agent",
@@ -109,6 +111,25 @@ AGENT_CONFIGS: Dict[AgentType, AgentConfig] = {
         """,
         model=DEFAULT_LLM_MODEL,
         output_type=ExpanderAgentOutput,
+    ),
+    AgentType.DOCUMENT_WRITER_AGENT: AgentConfig(
+        name="EdisonDeepResearch: Document Writer Agent",
+        instructions="""
+            You are an AI agent that manages document content, handling versioning and organization.
+            For a given document:
+            1. When empty, create appropriate sections and add initial content
+            2. When content exists, analyze and update sections while maintaining logical flow
+            3. Ensure sections fit within context windows
+            4. Maintain document versioning
+            5. Keep sections organized with clear transitions
+        """,
+        model=DEFAULT_LLM_MODEL,
+        tools=[
+            ToolType.CREATE_DOCUMENT,
+            ToolType.UPDATE_SECTION,
+            ToolType.ORGANIZE_SECTIONS,
+            ToolType.LIST_DOCUMENTS,
+        ],
     ),
 }
 
@@ -129,6 +150,7 @@ class EdisonAgents:
         self._agents: Dict[AgentType, Optional[Agent]] = {
             agent_type: None for agent_type in AgentType
         }
+        self._tools = EdisonTools()
 
     @property
     def tasks_agent(self) -> Optional[Agent]:
@@ -160,11 +182,15 @@ class EdisonAgents:
             ValueError: If agent initialization fails due to invalid configuration
         """
         for agent_type, config in AGENT_CONFIGS.items():
+            tools = None
+            if config.tools:
+                tools = [self._tools.get_tool(tool_type) for tool_type in config.tools]
+
             agent = Agent(
                 name=config.name,
                 instructions=config.instructions,
                 model=config.model,
-                tools=config.tools,
+                tools=tools,
                 output_type=config.output_type,
             )
             self.set_agent(agent_type, agent)

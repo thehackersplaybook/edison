@@ -35,7 +35,7 @@ class QnaEngine:
         """Generate question-answer pairs for a given query.
 
         Args:
-            query (str): The query to generate QNA pairs for.
+            queries (List[str]): List of queries to generate QNA pairs for.
 
         Returns:
             List[QnaItem]: List of QNA items containing question-answer pairs.
@@ -46,8 +46,8 @@ class QnaEngine:
         """
         try:
             qna_agent = self.agents.get_agent(AgentType.QNA_AGENT)
-            queries_input = [f"{str(i+1)}] {query}" for i, query in enumerate(queries)]
-            result = Runner.run_sync(qna_agent, queries_input)
+            formatted_queries = [f"{i+1}] {query}" for i, query in enumerate(queries)]
+            result = Runner.run_sync(qna_agent, formatted_queries)
             qna_output: QnaAgentOutput = result.final_output
             return qna_output.qna_pairs
         except Exception as e:
@@ -59,7 +59,7 @@ class QnaEngine:
         """Asynchronously generate question-answer pairs for a given query.
 
         Args:
-            query (str): The query to generate QNA pairs for.
+            queries (List[str]): List of queries to generate QNA pairs for.
 
         Returns:
             List[QnaItem]: List of QNA items containing question-answer pairs.
@@ -70,8 +70,8 @@ class QnaEngine:
         """
         try:
             qna_agent = self.agents.get_agent(AgentType.QNA_AGENT)
-            queries_input = [f"{str(i+1)}] {query}" for i, query in enumerate(queries)]
-            result = await Runner.run(qna_agent, queries_input)
+            formatted_queries = [f"{i+1}] {query}" for i, query in enumerate(queries)]
+            result = await Runner.run(qna_agent, formatted_queries)
             qna_output: QnaAgentOutput = result.final_output
             return qna_output.qna_pairs
         except Exception as e:

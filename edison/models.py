@@ -7,8 +7,10 @@ and structuring agent outputs in the Edison system.
 Author: Aditya Patange (https://www.github.com/AdiPat)
 """
 
+from enum import Enum
+from datetime import datetime
 from pydantic import BaseModel
-from typing import List
+from typing import Dict, List
 
 
 class EdisonApiKeyConfig(BaseModel):
@@ -67,3 +69,131 @@ class QnaAgentOutput(BaseModel):
     """
 
     qna_pairs: List[QnaItem]
+
+
+class DocumentSection(BaseModel):
+    """Container for document section data and metadata.
+
+    This class represents a section within a document, storing both the content
+    and associated metadata like timestamps and versioning information.
+
+    Attributes:
+        title (str): The title of the document section.
+        content (str): The main content text of the section.
+        last_modified (datetime): Timestamp of the last modification.
+        version (int): Version number of the section, defaults to 1.
+        context_tokens (int): Number of context tokens, defaults to 0.
+    """
+
+    title: str
+    content: str
+    last_modified: datetime
+    version: int = 1
+    context_tokens: int = 0
+
+
+class DocumentContent(BaseModel):
+    """Container for complete document content and metadata.
+
+    This class represents the complete document structure, including all sections
+    and associated metadata with version control support.
+
+    Attributes:
+        sections (Dict[str, DocumentSection]): Dictionary mapping section IDs to their content.
+        metadata (Dict[str, str]): Document-level metadata key-value pairs.
+        created_at (datetime): Document creation timestamp.
+        last_modified (datetime): Last modification timestamp.
+        version (int): Document version number, defaults to 1.
+    """
+
+    sections: Dict[str, DocumentSection]
+    metadata: Dict[str, str]
+    created_at: datetime
+    last_modified: datetime
+    version: int = 1
+
+
+class CreateDocumentArgs(BaseModel):
+    """Container for document creation arguments.
+
+    This class defines the required parameters for creating a new document
+    in the system, including document ID and metadata.
+
+    Attributes:
+        doc_id (str): Unique identifier for the document.
+        metadata (Dict[str, str]): Document metadata key-value pairs.
+        storage_dir (str): Directory for document storage, defaults to "documents".
+    """
+
+    doc_id: str
+    metadata: Dict[str, str]
+    storage_dir: str = "documents"
+
+
+class UpdateSectionArgs(BaseModel):
+    """Container for section update arguments.
+
+    This class defines the required parameters for updating an existing
+    section within a document.
+
+    Attributes:
+        doc_id (str): Identifier of the document containing the section.
+        section_id (str): Identifier of the section to update.
+        title (str): New title for the section.
+        content (str): New content for the section.
+        context_tokens (int): Number of context tokens in the content.
+        storage_dir (str): Directory for document storage, defaults to "documents".
+    """
+
+    doc_id: str
+    section_id: str
+    title: str
+    content: str
+    context_tokens: int
+    storage_dir: str = "documents"
+
+
+class OrganizeSectionsArgs(BaseModel):
+    """Container for section organization arguments.
+
+    This class defines the parameters for organizing document sections,
+    including token limit constraints.
+
+    Attributes:
+        doc_id (str): Identifier of the document to organize.
+        max_tokens (int): Maximum tokens per section, defaults to 2048.
+        storage_dir (str): Directory for document storage, defaults to "documents".
+    """
+
+    doc_id: str
+    max_tokens: int = 2048
+    storage_dir: str = "documents"
+
+
+class ListDocumentsArgs(BaseModel):
+    """Container for document listing arguments.
+
+    This class defines the parameters for listing documents from storage.
+
+    Attributes:
+        storage_dir (str): Directory to list documents from, defaults to "documents".
+    """
+
+    storage_dir: str = "documents"
+
+
+class ToolType(Enum):
+    """Enumeration of available tool types in the Edison system.
+
+    Each tool type represents a specialized function with specific capabilities:
+        CREATE_DOCUMENT: Creates new documents with metadata
+        UPDATE_SECTION: Updates or creates document sections
+        ORGANIZE_SECTIONS: Reorganizes sections within token limits
+        LIST_DOCUMENTS: Lists available documents and metadata
+    """
+
+    CREATE_DOCUMENT = "create_document"
+    UPDATE_SECTION = "update_section"
+    ORGANIZE_SECTIONS = "organize_sections"
+    LIST_DOCUMENTS = "list_documents"
+    WEB_SEARCH = "web_search"
