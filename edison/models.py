@@ -92,6 +92,20 @@ class DocumentSection(BaseModel):
     context_tokens: int = 0
 
 
+class DocumentMetdataItem(BaseModel):
+    """Container for document metadata item.
+
+    This class represents a single metadata item associated with a document.
+
+    Attributes:
+        key (str): The key of the metadata item.
+        value (str): The value of the metadata item.
+    """
+
+    key: str
+    value: str
+
+
 class DocumentContent(BaseModel):
     """Container for complete document content and metadata.
 
@@ -107,7 +121,7 @@ class DocumentContent(BaseModel):
     """
 
     sections: Dict[str, DocumentSection]
-    metadata: Dict[str, str]
+    # metadata: List[DocumentMetdataItem]
     created_at: datetime
     last_modified: datetime
     version: int = 1
@@ -126,8 +140,10 @@ class CreateDocumentArgs(BaseModel):
     """
 
     doc_id: str
-    metadata: Dict[str, str]
-    storage_dir: str = "documents"
+    # metadata: List[DocumentMetdataItem]
+
+    class Config:
+        extra = "forbid"
 
 
 class UpdateSectionArgs(BaseModel):
@@ -146,11 +162,11 @@ class UpdateSectionArgs(BaseModel):
     """
 
     doc_id: str
-    section_id: str
     title: str
     content: str
-    context_tokens: int
-    storage_dir: str = "documents"
+
+    class Config:
+        extra = "forbid"
 
 
 class OrganizeSectionsArgs(BaseModel):
@@ -166,8 +182,9 @@ class OrganizeSectionsArgs(BaseModel):
     """
 
     doc_id: str
-    max_tokens: int = 2048
-    storage_dir: str = "documents"
+
+    class Config:
+        extra = "forbid"
 
 
 class ListDocumentsArgs(BaseModel):
@@ -179,7 +196,8 @@ class ListDocumentsArgs(BaseModel):
         storage_dir (str): Directory to list documents from, defaults to "documents".
     """
 
-    storage_dir: str = "documents"
+    class Config:
+        extra = "forbid"
 
 
 class ToolType(Enum):
@@ -232,8 +250,10 @@ class AgentConfig(BaseModel):
     """
 
     name: str
+    description: str
     instructions: str
     model: str
     tools: Optional[List[Any]] = None
     output_type: Optional[Type] = None
     handoffs: Optional[List[AgentType]] = None
+    agent_tools: Optional[List[AgentType]] = None

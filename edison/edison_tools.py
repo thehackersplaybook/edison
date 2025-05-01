@@ -81,11 +81,9 @@ class EdisonTools:
             """
             try:
                 parsed = args
-                tool = DocumentWriterTool(parsed.storage_dir)
-                tool.create_document(parsed.doc_id, parsed.metadata)
-                return (
-                    f"Created document {parsed.doc_id} with metadata: {parsed.metadata}"
-                )
+                tool = DocumentWriterTool(storage_dir="documents")
+                tool.create_document(parsed.doc_id, metadata=None)
+                return f"Created document {parsed.doc_id}."
             except Exception as e:
                 return f"Failed to create document: {str(e)}"
 
@@ -109,13 +107,11 @@ class EdisonTools:
             """
             try:
                 parsed = args
-                tool = DocumentWriterTool(parsed.storage_dir)
+                tool = DocumentWriterTool(storage_dir="documents")
                 tool.update_section(
-                    parsed.doc_id,
-                    parsed.section_id,
-                    parsed.title,
-                    parsed.content,
-                    parsed.context_tokens,
+                    doc_id=parsed.doc_id,
+                    title=parsed.title,
+                    content=parsed.content,
                 )
                 return (
                     f"Updated section {parsed.section_id} in document {parsed.doc_id}."
@@ -143,8 +139,8 @@ class EdisonTools:
             """
             try:
                 parsed = args
-                tool = DocumentWriterTool(parsed.storage_dir)
-                return tool.organize_sections(parsed.doc_id, parsed.max_tokens)
+                tool = DocumentWriterTool(storage_dir="documents")
+                return tool.organize_sections(parsed.doc_id, max_tokens=4096)
             except Exception as e:
                 return f"Failed to organize sections: {str(e)}"
 
@@ -168,8 +164,7 @@ class EdisonTools:
                 Exception: If document listing fails
             """
             try:
-                parsed = args
-                tool = DocumentWriterTool(parsed.storage_dir)
+                tool = DocumentWriterTool(storage_dir="documents")
                 return tool.list_documents()
             except Exception as e:
                 return f"Failed to list documents: {str(e)}"
