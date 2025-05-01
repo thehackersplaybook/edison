@@ -15,6 +15,7 @@ from agents.result import RunResultStreaming
 from agents import set_default_openai_key, Runner, ItemHelpers
 from .edison_agents import EdisonAgents
 from .models import EdisonApiKeyConfig, AgentType
+from .common.utils import generate_document_id
 
 
 DEFAULT_QNA_MODEL = "gpt-4o"
@@ -44,6 +45,9 @@ class EdisonDeepResearch:
         """
         if api_key_config:
             self.api_key_config = api_key_config
+            os.environ["OPENAI_API_KEY"] = api_key_config.openai_api_key
+            os.environ["FIRECRAWL_API_KEY"] = api_key_config.firecrawl_api_key
+            os.environ["SERPER_API_KEY"] = api_key_config.serper_api_key
         else:
             load_dotenv(dotenv_path=".env", override=True)
             self.api_key_config = EdisonApiKeyConfig(
@@ -107,22 +111,23 @@ class EdisonDeepResearch:
             str: A stream of detailed agent run information and research results.
         """
         try:
+            document_id = generate_document_id()
             orchestrator_agent = self.agents.get_agent(
                 agent_type=AgentType.ORCHESTRATOR_AGENT
             )
             result: RunResultStreaming = Runner.run_streamed(
                 orchestrator_agent,
-                input=f"Deep research on: '{query}'",
+                input=f"Deep research on: '{query}'. Document ID: '{document_id}'",
             )
 
-            yield "=== Deep Research Starting ===\n"
+            yield f"=== Deep Research Starting: Document ID: {document_id} ===\n"
 
             async for event in result.stream_events():
                 if event.type == "agent_updated_stream_event":
                     yield f"Agent updated: {event.new_agent.name}\n"
                 elif event.type == "run_item_stream_event":
                     if event.item.type == "tool_call_item":
-                        yield f"-- Tool was called: {event.item.raw_item} \n"
+                        yield f"-- Tool was called: [{event.item.raw_item.name}] | Input: {event.item.raw_item.arguments} | Call ID: {event.item.raw_item.call_id} |\n"
                     elif event.item.type == "tool_call_output_item":
                         yield f"-- Tool output: {event.item.output}\n"
                     elif event.item.type == "message_output_item":
@@ -132,7 +137,7 @@ class EdisonDeepResearch:
                 ):
                     yield event.data.delta
 
-            yield "\n=== Deep Research Complete ===\n"
+            yield f"\n=== Deep Research Complete: Document ID = {document_id} ===\n"
 
         except Exception as e:
             print(f"Error during deep research: {e}")

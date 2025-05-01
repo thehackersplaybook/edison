@@ -7,6 +7,7 @@ Author: Aditya Patange (https://www.github.com/AdiPat)
 
 import os
 from typing import Optional
+from uuid import uuid4
 
 
 def ensure_dir(path: str) -> None:
@@ -49,3 +50,15 @@ def get_document_id(title: str, timestamp: Optional[str] = None) -> str:
     if timestamp:
         doc_id = f"{doc_id}_{timestamp}"
     return doc_id
+
+
+def generate_document_id() -> str:
+    """Generate a document ID based on a query.
+
+    Args:
+        query: The query string
+
+    Returns:
+        A sanitized document ID
+    """
+    return uuid4()
