@@ -80,7 +80,7 @@ class EdisonAgents:
             ValueError: If agent initialization fails due to invalid configuration
         """
         for agent_type, config in AGENT_CONFIGS.items():
-            tools = None
+            tools = []
             handoffs = None
             agent = None
 
