@@ -17,7 +17,7 @@ Note:
 Author: Aditya Patange (https://www.github.com/AdiPat)
 """
 
-from agents import Agent, WebSearchTool
+from agents import Agent
 from enum import Enum
 from .models import ExpanderAgentOutput, QnaAgentOutput
 from typing import Dict, Optional, List, Type, Any
@@ -47,6 +47,7 @@ class AgentType(Enum):
     GENERATOR_AGENT = "generator_agent"
     QUERY_EXPANDER_AGENT = "query_expander_agent"
     DOCUMENT_WRITER_AGENT = "document_writer_agent"
+    ORCHESTRATOR_AGENT = "orchestrator_agent"
 
 
 class AgentConfig(BaseModel):
@@ -65,6 +66,7 @@ class AgentConfig(BaseModel):
     model: str
     tools: Optional[List[Any]] = None
     output_type: Optional[Type] = None
+    handoffs: Optional[List[AgentType]] = None
 
 
 AGENT_CONFIGS: Dict[AgentType, AgentConfig] = {
@@ -131,6 +133,22 @@ AGENT_CONFIGS: Dict[AgentType, AgentConfig] = {
             ToolType.LIST_DOCUMENTS,
         ],
     ),
+    AgentType.ORCHESTRATOR_AGENT: AgentConfig(
+        name="EdisonDeepResearch: Orchestrator Agent",
+        instructions="""
+            You are an AI agent that orchestrates the tasks and manages the workflow of other agents.
+            You will be provided with a query and you need to manage the workflow of other agents.
+        """,
+        model=DEFAULT_LLM_MODEL,
+        handoffs=[
+            AgentType.TASKS_AGENT,
+            AgentType.QNA_AGENT,
+            AgentType.SUMMARIZER_AGENT,
+            AgentType.GENERATOR_AGENT,
+            AgentType.QUERY_EXPANDER_AGENT,
+            AgentType.DOCUMENT_WRITER_AGENT,
+        ],
+    ),
 }
 
 
@@ -172,6 +190,14 @@ class EdisonAgents:
     def query_expander_agent(self) -> Optional[Agent]:
         return self._agents.get(AgentType.QUERY_EXPANDER_AGENT)
 
+    @property
+    def document_writer_agent(self) -> Optional[Agent]:
+        return self._agents.get(AgentType.DOCUMENT_WRITER_AGENT)
+
+    @property
+    def orchestrator_agent(self) -> Optional[Agent]:
+        return self._agents.get(AgentType.ORCHESTRATOR_AGENT)
+
     def init_agents(self) -> None:
         """Initializes all specialized AI agents for deep research operations.
 
@@ -183,16 +209,32 @@ class EdisonAgents:
         """
         for agent_type, config in AGENT_CONFIGS.items():
             tools = None
+            handoffs = None
+            agent = None
+
             if config.tools:
                 tools = [self._tools.get_tool(tool_type) for tool_type in config.tools]
 
-            agent = Agent(
-                name=config.name,
-                instructions=config.instructions,
-                model=config.model,
-                tools=tools,
-                output_type=config.output_type,
-            )
+            if config.handoffs:
+                handoffs = [self.get_agent(handoff) for handoff in config.handoffs]
+
+            if handoffs:
+                agent = Agent(
+                    name=config.name,
+                    instructions=config.instructions,
+                    model=config.model,
+                    tools=tools,
+                    output_type=config.output_type,
+                    handoffs=handoffs,
+                )
+            else:
+                agent = Agent(
+                    name=config.name,
+                    instructions=config.instructions,
+                    model=config.model,
+                    tools=tools,
+                    output_type=config.output_type,
+                )
             self.set_agent(agent_type, agent)
         print("Agents initialized successfully.")
 
