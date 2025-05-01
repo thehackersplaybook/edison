@@ -19,7 +19,7 @@ import json
 from typing import Dict, Optional
 from datetime import datetime
 from pathlib import Path
-from .document_tools import DocumentContent, DocumentSection, DocumentError
+from .document_tools import DocumentContent, DocumentSection
 from ..errors import StorageError, StorageIOError
 
 
