@@ -63,7 +63,7 @@ class EdisonTools:
         """
 
         async def create_document_handler(
-            ctx: RunContextWrapper[Any], args: str
+            ctx: RunContextWrapper[Any], args: CreateDocumentArgs
         ) -> str:
             """Handles creation of new documents.
 
@@ -80,7 +80,7 @@ class EdisonTools:
                 Exception: If document creation fails
             """
             try:
-                parsed = CreateDocumentArgs.model_validate_json(args)
+                parsed = args
                 tool = DocumentWriterTool(parsed.storage_dir)
                 tool.create_document(parsed.doc_id, parsed.metadata)
                 return (
@@ -89,7 +89,9 @@ class EdisonTools:
             except Exception as e:
                 return f"Failed to create document: {str(e)}"
 
-        async def update_section_handler(ctx: RunContextWrapper[Any], args: str) -> str:
+        async def update_section_handler(
+            ctx: RunContextWrapper[Any], args: UpdateSectionArgs
+        ) -> str:
             """Handles updating document sections.
 
             Updates or creates a section within an existing document with new content
@@ -106,7 +108,7 @@ class EdisonTools:
                 Exception: If section update fails
             """
             try:
-                parsed = UpdateSectionArgs.model_validate_json(args)
+                parsed = args
                 tool = DocumentWriterTool(parsed.storage_dir)
                 tool.update_section(
                     parsed.doc_id,
@@ -122,7 +124,7 @@ class EdisonTools:
                 return f"Failed to update section: {str(e)}"
 
         async def organize_sections_handler(
-            ctx: RunContextWrapper[Any], args: str
+            ctx: RunContextWrapper[Any], args: OrganizeSectionsArgs
         ) -> List[str]:
             """Handles organizing document sections.
 
@@ -140,14 +142,14 @@ class EdisonTools:
                 Exception: If section organization fails
             """
             try:
-                parsed = OrganizeSectionsArgs.model_validate_json(args)
+                parsed = args
                 tool = DocumentWriterTool(parsed.storage_dir)
                 return tool.organize_sections(parsed.doc_id, parsed.max_tokens)
             except Exception as e:
                 return f"Failed to organize sections: {str(e)}"
 
         async def list_documents_handler(
-            ctx: RunContextWrapper[Any], args: str
+            ctx: RunContextWrapper[Any], args: ListDocumentsArgs
         ) -> Dict[str, Dict[str, str]]:
             """Handles listing available documents.
 
@@ -166,7 +168,7 @@ class EdisonTools:
                 Exception: If document listing fails
             """
             try:
-                parsed = ListDocumentsArgs.model_validate_json(args)
+                parsed = args
                 tool = DocumentWriterTool(parsed.storage_dir)
                 return tool.list_documents()
             except Exception as e:
