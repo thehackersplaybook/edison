@@ -70,6 +70,21 @@ class EdisonAgents:
     def orchestrator_agent(self) -> Optional[Agent]:
         return self._agents.get(AgentType.ORCHESTRATOR_AGENT)
 
+    def _sanitize_tool_name(self, name: str) -> str:
+        """Sanitizes tool names to match the required pattern ^[a-zA-Z0-9_-]+$.
+
+        Args:
+            name (str): The original tool name
+
+        Returns:
+            str: Sanitized tool name containing only alphanumeric chars, underscores, and hyphens
+        """
+        # Replace spaces and special chars with underscores, remove all other special chars
+        import re
+
+        sanitized = re.sub(r"[^a-zA-Z0-9_-]", "_", name)
+        return sanitized
+
     def init_agents(self) -> None:
         """Initializes all specialized AI agents for deep research operations.
 
@@ -89,6 +104,18 @@ class EdisonAgents:
 
             if config.handoffs:
                 handoffs = [self.get_agent(handoff) for handoff in config.handoffs]
+
+            if config.agent_tools:
+                for agent_tool in config.agent_tools:
+                    cur_agent = self.get_agent(agent_tool)
+                    sanitized_name = self._sanitize_tool_name(
+                        AGENT_CONFIGS[agent_tool].name
+                    )
+                    cur_tool = cur_agent.as_tool(
+                        tool_name=sanitized_name,
+                        tool_description=AGENT_CONFIGS[agent_tool].description,
+                    )
+                    tools.append(cur_tool)
 
             if handoffs:
                 agent = Agent(

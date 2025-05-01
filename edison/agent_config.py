@@ -30,7 +30,8 @@ DEFAULT_QNA_MODEL = "gpt-4o"
 
 AGENT_CONFIGS: Dict[AgentType, AgentConfig] = {
     AgentType.TASKS_AGENT: AgentConfig(
-        name="EdisonDeepResearch: Task Agent",
+        name="edison_task_agent",
+        description="Performs tasks based on the query provided to it.",
         instructions="""
             You are an AI agent that performs tasks based on the query provided to you.
             You will be provided with a query and you need to perform the task.
@@ -38,7 +39,8 @@ AGENT_CONFIGS: Dict[AgentType, AgentConfig] = {
         model=DEFAULT_QNA_MODEL,
     ),
     AgentType.QNA_AGENT: AgentConfig(
-        name="EdisonDeepResearch: Questioning Agent",
+        name="edison_qna_agent",
+        description="Generates and answers questions based on the query provided to it.",
         instructions="""
             You are an AI agent that asks more questions regarding a topic or query to get more information.
             You will be provided with a query and you need to ask more questions to get more information.
@@ -50,7 +52,8 @@ AGENT_CONFIGS: Dict[AgentType, AgentConfig] = {
         tools=[ToolType.WEB_SEARCH],
     ),
     AgentType.SUMMARIZER_AGENT: AgentConfig(
-        name="EdisonDeepResearch: Summarizer Agent",
+        name="edison_summarizer_agent",
+        description="Summarizes the information provided to it.",
         instructions="""
             You are an AI agent that summarizes the information provided to you.
             You will be provided with a query and you need to summarize the information.
@@ -58,7 +61,8 @@ AGENT_CONFIGS: Dict[AgentType, AgentConfig] = {
         model=DEFAULT_LLM_MODEL,
     ),
     AgentType.GENERATOR_AGENT: AgentConfig(
-        name="EdisonDeepResearch: Generator Agent",
+        name="edison_generator_agent",
+        description="Generates information based on the query provided to it.",
         instructions="""
             You are an AI agent that generates information based on the query provided to you.
             You will be provided with a query and you need to generate information.
@@ -69,7 +73,8 @@ AGENT_CONFIGS: Dict[AgentType, AgentConfig] = {
         tools=[ToolType.WEB_SEARCH],
     ),
     AgentType.QUERY_EXPANDER_AGENT: AgentConfig(
-        name="EdisonDeepResearch: Query Expander Agent",
+        name="edison_query_expander_agent",
+        description="Expands the query provided to it.",
         instructions="""
             You are an AI agent that expands the query provided to you.
             You will be provided with a query and you need to expand it.
@@ -78,7 +83,8 @@ AGENT_CONFIGS: Dict[AgentType, AgentConfig] = {
         output_type=ExpanderAgentOutput,
     ),
     AgentType.DOCUMENT_WRITER_AGENT: AgentConfig(
-        name="EdisonDeepResearch: Document Writer Agent",
+        name="edison_document_writer_agent",
+        description="Manages document content, handling versioning and organization.",
         instructions="""
             You are an AI agent that manages document content, handling versioning and organization.
 
@@ -104,7 +110,8 @@ AGENT_CONFIGS: Dict[AgentType, AgentConfig] = {
         ],
     ),
     AgentType.ORCHESTRATOR_AGENT: AgentConfig(
-        name="EdisonDeepResearch: Orchestrator Agent",
+        name="edison_orchestrator_agent",
+        description="Orchestrates the workflow of other agents.",
         instructions="""
             You are EdisonDeepResearch AI agent that performs deep research on a given query.
             You will be provided with a query and you need to manage the workflow of other agents.
@@ -119,7 +126,7 @@ AGENT_CONFIGS: Dict[AgentType, AgentConfig] = {
             - Repeat this process until the document is complete.
         """,
         model=DEFAULT_LLM_MODEL,
-        handoffs=[
+        agent_tools=[
             AgentType.TASKS_AGENT,
             AgentType.QNA_AGENT,
             AgentType.SUMMARIZER_AGENT,
