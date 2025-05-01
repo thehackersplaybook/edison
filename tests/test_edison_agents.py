@@ -29,6 +29,8 @@ def test_initial_state(edison_agents):
     assert edison_agents.qna_agent is None
     assert edison_agents.summarizer_agent is None
     assert edison_agents.generator_agent is None
+    assert edison_agents.document_writer_agent is None
+    assert edison_agents.orchestrator_agent is None
     assert not edison_agents.are_agents_initialized()
 
 
@@ -49,6 +51,12 @@ def test_set_and_get_agent(edison_agents):
 
     edison_agents.set_agent(AgentType.GENERATOR_AGENT, mock_agent)
     assert edison_agents.get_agent(AgentType.GENERATOR_AGENT) == mock_agent
+
+    edison_agents.set_agent(AgentType.DOCUMENT_WRITER_AGENT, mock_agent)
+    assert edison_agents.get_agent(AgentType.DOCUMENT_WRITER_AGENT) == mock_agent
+
+    edison_agents.set_agent(AgentType.ORCHESTRATOR_AGENT, mock_agent)
+    assert edison_agents.get_agent(AgentType.ORCHESTRATOR_AGENT) == mock_agent
 
 
 @pytest.mark.unit
@@ -89,6 +97,8 @@ def test_are_agents_initialized_complete(edison_agents):
     edison_agents.set_agent(AgentType.SUMMARIZER_AGENT, mock_agent)
     edison_agents.set_agent(AgentType.GENERATOR_AGENT, mock_agent)
     edison_agents.set_agent(AgentType.QUERY_EXPANDER_AGENT, mock_agent)
+    edison_agents.set_agent(AgentType.DOCUMENT_WRITER_AGENT, mock_agent)
+    edison_agents.set_agent(AgentType.ORCHESTRATOR_AGENT, mock_agent)
 
     assert edison_agents.are_agents_initialized()
 
@@ -100,3 +110,5 @@ def test_get_uninitialized_agent(edison_agents):
     assert edison_agents.get_agent(AgentType.QNA_AGENT) is None
     assert edison_agents.get_agent(AgentType.SUMMARIZER_AGENT) is None
     assert edison_agents.get_agent(AgentType.GENERATOR_AGENT) is None
+    assert edison_agents.get_agent(AgentType.DOCUMENT_WRITER_AGENT) is None
+    assert edison_agents.get_agent(AgentType.ORCHESTRATOR_AGENT) is None

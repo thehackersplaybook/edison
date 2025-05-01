@@ -10,7 +10,7 @@ Author: Aditya Patange (https://www.github.com/AdiPat)
 from enum import Enum
 from datetime import datetime
 from pydantic import BaseModel
-from typing import Dict, List
+from typing import Any, Dict, List, Optional, Type
 
 
 class EdisonApiKeyConfig(BaseModel):
@@ -197,3 +197,43 @@ class ToolType(Enum):
     ORGANIZE_SECTIONS = "organize_sections"
     LIST_DOCUMENTS = "list_documents"
     WEB_SEARCH = "web_search"
+
+
+class AgentType(Enum):
+    """Enumeration of available agent types in the Edison system.
+
+    Each agent type represents a specialized AI agent with specific capabilities:
+        TASKS_AGENT: Executes specific research tasks
+        QNA_AGENT: Generates and answers questions
+        SUMMARIZER_AGENT: Provides concise summaries
+        GENERATOR_AGENT: Creates content and information
+        QUERY_EXPANDER_AGENT: Expands search queries for broader coverage
+        DOCUMENT_WRITER_AGENT: Manages document content with versioning and organization
+    """
+
+    TASKS_AGENT = "tasks_agent"
+    QNA_AGENT = "qna_agent"
+    SUMMARIZER_AGENT = "summarizer_agent"
+    GENERATOR_AGENT = "generator_agent"
+    QUERY_EXPANDER_AGENT = "query_expander_agent"
+    DOCUMENT_WRITER_AGENT = "document_writer_agent"
+    ORCHESTRATOR_AGENT = "orchestrator_agent"
+
+
+class AgentConfig(BaseModel):
+    """Configuration model for Edison AI agents.
+
+    Attributes:
+        name (str): The display name of the agent
+        instructions (str): The prompt/instructions for the agent's behavior
+        model (str): The LLM model to be used by the agent
+        tools (Optional[List[Any]]): List of tools available to the agent
+        output_type (Optional[Type]): Expected output type for the agent's responses
+    """
+
+    name: str
+    instructions: str
+    model: str
+    tools: Optional[List[Any]] = None
+    output_type: Optional[Type] = None
+    handoffs: Optional[List[AgentType]] = None
