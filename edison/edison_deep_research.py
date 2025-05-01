@@ -7,12 +7,13 @@ Author: Aditya Patange (https://www.github.com/AdiPat)
 """
 
 import os
+from typing import AsyncGenerator
 from dotenv import load_dotenv
-from agents import set_default_openai_key
+from openai.types.responses import ResponseTextDeltaEvent
+from agents.result import RunResultStreaming
+from agents import set_default_openai_key, Runner, ItemHelpers
 from .edison_agents import EdisonAgents
-from .query_expander import QueryExpander
-from .qna_engine import QnaEngine
-from .models import EdisonApiKeyConfig
+from .models import EdisonApiKeyConfig, AgentType
 
 
 DEFAULT_QNA_MODEL = "gpt-4o"
@@ -59,9 +60,6 @@ class EdisonDeepResearch:
         self.agents = EdisonAgents()
         self.agents.init_agents()
 
-        self._query_expander = QueryExpander(agents=self.agents)
-        self._qna_engine = QnaEngine(agents=self.agents)
-
     def are_agents_initialized(self):
         """Check if all required agents are properly initialized.
 
@@ -95,19 +93,47 @@ class EdisonDeepResearch:
             return False
         return True
 
-    def deep(self, query: str, model: str = DEFAULT_LLM_MODEL):
-        """Perform deep research on the given query.
+    async def deep_stream_async(
+        self, query: str, model: str = DEFAULT_LLM_MODEL
+    ) -> AsyncGenerator[str, None]:
+        """Perform deep research on the given query and return a stream of results.
 
         Args:
             query (str): The query to research.
             model (str, optional): The model to use for research. Defaults to DEFAULT_LLM_MODEL.
 
-        Returns:
-            Any: The result of the deep research.
+        Yields:
+            str: A stream of detailed agent run information and research results.
         """
-        print(f"Performing deep research on query: {query}")
-        expanded_queries = self._query_expander.expand_query(query)
-        print(f"Expanded queries: {expanded_queries}")
-        qna_pairs = self._qna_engine.generate_qna(queries=expanded_queries)
-        print(f"QnA pairs: {qna_pairs}")
-        pass
+        try:
+            orchestrator_agent = self.agents.get_agent(
+                agent_type=AgentType.ORCHESTRATOR_AGENT
+            )
+            result: RunResultStreaming = Runner.run_streamed(
+                orchestrator_agent,
+                input=f"Deep research on: '{query}'",
+                model=model,
+            )
+
+            yield "=== Deep Research Starting ===\n"
+
+            async for event in result.stream_events():
+                if event.type == "agent_updated_stream_event":
+                    yield f"Agent updated: {event.new_agent.name}\n"
+                elif event.type == "run_item_stream_event":
+                    if event.item.type == "tool_call_item":
+                        yield f"-- Tool was called: {event.item.raw_item} \n"
+                    elif event.item.type == "tool_call_output_item":
+                        yield f"-- Tool output: {event.item.output}\n"
+                    elif event.item.type == "message_output_item":
+                        yield f"-- Message output:\n{ItemHelpers.text_message_output(event.item)}\n"
+                elif event.type == "raw_response_event" and isinstance(
+                    event.data, ResponseTextDeltaEvent
+                ):
+                    yield event.data.delta
+
+            yield "\n=== Deep Research Complete ===\n"
+
+        except Exception as e:
+            print(f"Error during deep research: {e}")
+            yield f"Deep research failed for query='{query}'. Please try again later."
