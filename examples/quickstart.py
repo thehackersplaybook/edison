@@ -13,10 +13,10 @@ async def main():
     """
     researcher = EdisonDeepResearch()
     query = input("Enter your research query: ")
-    result = researcher.deep_stream_async(query=query)
+    result = researcher.deep_stream_async(query=query, verbose=True)
 
     async for chunk in result:
-        print(chunk, end="", flush=True)
+        pass
 
 
 if __name__ == "__main__":
