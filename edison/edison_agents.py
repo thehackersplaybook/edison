@@ -22,6 +22,7 @@ from typing import Dict, Optional
 from .edison_tools import EdisonTools
 from .models import AgentType
 from .agent_config import AGENT_CONFIGS
+from .common.printer import Printer
 
 
 class EdisonAgents:
@@ -135,7 +136,7 @@ class EdisonAgents:
                     output_type=config.output_type,
                 )
             self.set_agent(agent_type, agent)
-        print("Agents initialized successfully.")
+        Printer.print_bright_green_message("✅ Agents initialized successfully.")
 
     def set_agent(self, agent_type: AgentType, agent: Agent) -> None:
         """Sets an agent instance for a specific agent type.

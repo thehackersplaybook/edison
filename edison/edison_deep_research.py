@@ -16,6 +16,7 @@ from agents import set_default_openai_key, Runner, ItemHelpers
 from .edison_agents import EdisonAgents
 from .models import EdisonApiKeyConfig, AgentType
 from .common.utils import generate_document_id
+from .common.printer import Printer
 
 
 DEFAULT_QNA_MODEL = "gpt-4o"
@@ -32,6 +33,9 @@ class EdisonDeepResearch:
         api_key_config (EdisonApiKeyConfig): Configuration containing required API keys.
         agents (EdisonAgents): Collection of specialized AI agents used for research.
     """
+
+    DEFAULT_MAX_TURNS = 100
+    DEFAULT_VERBOSE = False
 
     def __init__(
         self, api_key_config: EdisonApiKeyConfig = None, dotenv_path: str = ".env"
@@ -103,17 +107,11 @@ class EdisonDeepResearch:
         return True
 
     async def deep_stream_async(
-        self, query: str, model: str = DEFAULT_LLM_MODEL
+        self,
+        query: str,
+        verbose: bool = DEFAULT_VERBOSE,
     ) -> AsyncGenerator[str, None]:
-        """Perform deep research on the given query and return a stream of results.
-
-        Args:
-            query (str): The query to research.
-            model (str, optional): The model to use for research. Defaults to DEFAULT_LLM_MODEL.
-
-        Yields:
-            str: A stream of detailed agent run information and research results.
-        """
+        """Perform deep research on the given query and return a stream of results."""
         try:
             document_id = generate_document_id()
             orchestrator_agent = self.agents.get_agent(
@@ -121,29 +119,65 @@ class EdisonDeepResearch:
             )
             result: RunResultStreaming = Runner.run_streamed(
                 orchestrator_agent,
-                input=f"Deep research on: '{query}'. Document ID: '{document_id}'",
+                max_turns=self.DEFAULT_MAX_TURNS,
+                input=f"Deep research on: '{query}'. Document ID: '{document_id}'. Use the document ID to update the document.",
             )
 
-            yield f"=== Deep Research Starting: Document ID: {document_id} ===\n"
+            header = f"🔍 Deep Research Starting | Document ID: {document_id}"
+            sep = "=" * len(header)
+            if verbose:
+                Printer.print_cyan_message(sep)
+                Printer.print_cyan_message(header)
+                Printer.print_cyan_message(sep)
+            yield f"{header}\n"
 
             async for event in result.stream_events():
                 if event.type == "agent_updated_stream_event":
-                    yield f"Agent updated: {event.new_agent.name}\n"
+                    msg = f"🤖 Agent updated: {event.new_agent.name}"
+                    if verbose:
+                        Printer.print_blue_message(msg)
+                    yield f"{msg}\n"
+
                 elif event.type == "run_item_stream_event":
                     if event.item.type == "tool_call_item":
-                        yield f"-- Tool was called: [{event.item.raw_item.name}] | Input: {event.item.raw_item.arguments} | Call ID: {event.item.raw_item.call_id} |\n"
+                        msg = f"⚙️  Tool called: [{event.item.raw_item.name}]\n   Input: {event.item.raw_item.arguments}\n   ID: {event.item.raw_item.call_id}"
+                        if verbose:
+                            Printer.print_yellow_message(msg)
+                        yield f"{msg}\n"
+
                     elif event.item.type == "tool_call_output_item":
-                        yield f"-- Tool output: {event.item.output}\n"
+                        msg = f"📤 Tool output: {event.item.output}"
+                        if verbose:
+                            Printer.print_green_message(msg)
+                        yield f"{msg}\n"
+
                     elif event.item.type == "message_output_item":
-                        yield f"-- Message output:\n{ItemHelpers.text_message_output(event.item)}\n"
+                        msg = f"💭 Message output:\n{ItemHelpers.text_message_output(event.item)}"
+                        if verbose:
+                            Printer.print_bright_cyan_message(msg)
+                        yield f"{msg}\n"
+
                 elif event.type == "raw_response_event" and isinstance(
                     event.data, ResponseTextDeltaEvent
                 ):
-                    yield event.data.delta
+                    if event.data.delta:
+                        msg = f"{event.data.delta}"
+                        if verbose:
+                            Printer.print_bright_blue_message(msg, end="")
+                        yield event.data.delta
 
-            yield f"\n=== Deep Research Complete: Document ID = {document_id} ===\n"
+            footer = f"✅ Deep Research Complete | Document ID: {document_id}"
+            sep = "=" * len(footer)
+            if verbose:
+                Printer.print_cyan_message(sep)
+                Printer.print_cyan_message(footer)
+                Printer.print_cyan_message(sep)
+            yield f"\n{footer}\n"
 
         except Exception as e:
-            print(f"Error during deep research: {e}")
+            error_msg = (
+                f"❌ Deep research failed for query='{query}'. Please try again later."
+            )
+            Printer.print_red_message(f"Error during deep research: {e}")
             traceback.print_exc()
-            yield f"Deep research failed for query='{query}'. Please try again later."
+            yield error_msg
