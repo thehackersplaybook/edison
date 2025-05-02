@@ -14,7 +14,7 @@ def mock_env_keys(monkeypatch):
 def test_end_to_end_basic_flow():
     """Test basic end-to-end functionality of EdisonDeepResearch"""
     # Initialize the research module using environment variables
-    research = EdisonDeepResearch()
+    research = EdisonDeepResearch(dotenv_path="nonexistent.env")
 
     # Verify API keys are loaded from environment
     assert research.api_key_config.openai_api_key == "test-openai-key"

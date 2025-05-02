@@ -80,14 +80,14 @@ class DocumentSection(BaseModel):
     Attributes:
         title (str): The title of the document section.
         content (str): The main content text of the section.
-        last_modified (datetime): Timestamp of the last modification.
+        last_modified (Optional[datetime]): Timestamp of the last modification.
         version (int): Version number of the section, defaults to 1.
         context_tokens (int): Number of context tokens, defaults to 0.
     """
 
     title: str
     content: str
-    last_modified: datetime
+    last_modified: Optional[datetime] = None
     version: int = 1
     context_tokens: int = 0
 
@@ -114,16 +114,16 @@ class DocumentContent(BaseModel):
 
     Attributes:
         sections (Dict[str, DocumentSection]): Dictionary mapping section IDs to their content.
-        metadata (Dict[str, str]): Document-level metadata key-value pairs.
-        created_at (datetime): Document creation timestamp.
-        last_modified (datetime): Last modification timestamp.
+        metadata (List[DocumentMetdataItem]): List of document metadata items.
+        created_at (Optional[datetime]): Document creation timestamp.
+        last_modified (Optional[datetime]): Last modification timestamp.
         version (int): Document version number, defaults to 1.
     """
 
     sections: Dict[str, DocumentSection]
-    # metadata: List[DocumentMetdataItem]
-    created_at: datetime
-    last_modified: datetime
+    metadata: List[DocumentMetdataItem] = []
+    created_at: Optional[datetime] = None
+    last_modified: Optional[datetime] = None
     version: int = 1
 
 

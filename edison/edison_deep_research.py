@@ -33,12 +33,15 @@ class EdisonDeepResearch:
         agents (EdisonAgents): Collection of specialized AI agents used for research.
     """
 
-    def __init__(self, api_key_config: EdisonApiKeyConfig = None):
+    def __init__(
+        self, api_key_config: EdisonApiKeyConfig = None, dotenv_path: str = ".env"
+    ):
         """Initialize the EdisonDeepResearch instance.
 
         Args:
             api_key_config (EdisonApiKeyConfig, optional): Configuration object containing API keys.
                 If not provided, keys are loaded from environment variables.
+            dotenv_path (str, optional): Path to the .env file. Defaults to ".env".
 
         Raises:
             ValueError: If the provided API keys are invalid or missing.
@@ -49,7 +52,8 @@ class EdisonDeepResearch:
             os.environ["FIRECRAWL_API_KEY"] = api_key_config.firecrawl_api_key
             os.environ["SERPER_API_KEY"] = api_key_config.serper_api_key
         else:
-            load_dotenv(dotenv_path=".env", override=True)
+            if os.path.exists(dotenv_path):
+                load_dotenv(dotenv_path=dotenv_path, override=True)
             self.api_key_config = EdisonApiKeyConfig(
                 openai_api_key=os.getenv("OPENAI_API_KEY"),
                 firecrawl_api_key=os.getenv("FIRECRAWL_API_KEY"),

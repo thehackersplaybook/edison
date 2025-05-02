@@ -54,9 +54,9 @@ def test_edison_initialization_with_invalid_config(
 
 
 @pytest.mark.unit
-def test_edison_initialization_with_env_vars():
+def test_edison_initialization_with_env_vars(mock_env_keys):
     """Test initialization using environment variables"""
-    research = EdisonDeepResearch()
+    research = EdisonDeepResearch(dotenv_path="nonexistent.env")
     assert research.api_key_config.openai_api_key == "test-openai-key"
     assert research.api_key_config.firecrawl_api_key == "test-firecrawl-key"
     assert research.api_key_config.serper_api_key == "test-serper-key"
