@@ -9,7 +9,7 @@ Author: Aditya Patange (https://www.github.com/AdiPat)
 
 from enum import Enum
 from datetime import datetime
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Any, Dict, List, Optional, Type
 
 
@@ -72,24 +72,13 @@ class QnaAgentOutput(BaseModel):
 
 
 class DocumentSection(BaseModel):
-    """Container for document section data and metadata.
-
-    This class represents a section within a document, storing both the content
-    and associated metadata like timestamps and versioning information.
-
-    Attributes:
-        title (str): The title of the document section.
-        content (str): The main content text of the section.
-        last_modified (Optional[datetime]): Timestamp of the last modification.
-        version (int): Version number of the section, defaults to 1.
-        context_tokens (int): Number of context tokens, defaults to 0.
-    """
+    """A section within a document."""
 
     title: str
     content: str
-    last_modified: Optional[datetime] = None
-    version: int = 1
-    context_tokens: int = 0
+    version: int = 0
+    last_modified: Optional[datetime] = Field(default_factory=datetime.now)
+    context_tokens: Optional[int] = None
 
 
 class DocumentMetdataItem(BaseModel):
@@ -107,24 +96,13 @@ class DocumentMetdataItem(BaseModel):
 
 
 class DocumentContent(BaseModel):
-    """Container for complete document content and metadata.
+    """Content of a document including sections."""
 
-    This class represents the complete document structure, including all sections
-    and associated metadata with version control support.
-
-    Attributes:
-        sections (Dict[str, DocumentSection]): Dictionary mapping section IDs to their content.
-        metadata (List[DocumentMetdataItem]): List of document metadata items.
-        created_at (Optional[datetime]): Document creation timestamp.
-        last_modified (Optional[datetime]): Last modification timestamp.
-        version (int): Document version number, defaults to 1.
-    """
-
-    sections: Dict[str, DocumentSection]
-    metadata: List[DocumentMetdataItem] = []
-    created_at: Optional[datetime] = None
-    last_modified: Optional[datetime] = None
-    version: int = 1
+    sections: Dict[str, DocumentSection] = Field(default_factory=dict)
+    metadata: List[DocumentMetdataItem] = Field(default_factory=list)
+    version: int = 0
+    created_at: Optional[datetime] = Field(default_factory=datetime.now)
+    last_modified: Optional[datetime] = Field(default_factory=datetime.now)
 
 
 class CreateDocumentArgs(BaseModel):
@@ -257,3 +235,20 @@ class AgentConfig(BaseModel):
     output_type: Optional[Type] = None
     handoffs: Optional[List[AgentType]] = None
     agent_tools: Optional[List[AgentType]] = None
+
+
+class ComparisonResult(BaseModel):
+    """Result of comparing two sections."""
+
+    similarity_score: float = Field(..., description="Similarity score between 0 and 1")
+    explanation: str = Field(..., description="Explanation of the similarity")
+
+
+class MergeResult(BaseModel):
+    """Result of merging two sections."""
+
+    merged_title: str = Field(..., description="The merged section title")
+    merged_content: str = Field(..., description="The merged section content")
+    source_sections: list[str] = Field(
+        default_factory=list, description="IDs of sections that were merged"
+    )

@@ -19,9 +19,9 @@ import json
 from typing import Dict, Optional
 from datetime import datetime
 from pathlib import Path
-from .document_tools import DocumentContent, DocumentSection
 from ..errors import StorageError, StorageIOError
-from ..models import DocumentMetdataItem
+from ..models import DocumentContent, DocumentSection, DocumentMetdataItem
+from ..common.utils import ensure_dir
 
 
 class DocumentStorage:
@@ -48,10 +48,7 @@ class DocumentStorage:
             StorageError: If storage directory cannot be created or accessed
         """
         self.storage_dir = Path(storage_dir)
-        try:
-            self.storage_dir.mkdir(parents=True, exist_ok=True)
-        except Exception as e:
-            raise StorageError(f"Failed to initialize storage directory: {e}")
+        ensure_dir(str(self.storage_dir))
 
     def _sanitize_doc_id(self, doc_id: str) -> str:
         """Sanitize document ID for filesystem safety.

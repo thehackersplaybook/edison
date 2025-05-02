@@ -1,214 +1,184 @@
-"""Document management tools for Edison agents.
-
-This module provides tools for managing documents, including versioning,
-content organization, and automatic restructuring.
-
-Author: Aditya Patange (https://www.github.com/AdiPat)
-"""
+"""Document management tools with versioning and organization."""
 
 import os
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Dict, Optional, Tuple
 from datetime import datetime
-from difflib import SequenceMatcher
-import re
-from ..errors import DocumentNotFoundError
-from ..models import DocumentContent, DocumentSection, DocumentMetdataItem
-from .document_storage import DocumentStorage
-from ..common.utils import ensure_dir
+from pathlib import Path
 from openai import OpenAI
+
+from ..models import DocumentContent, DocumentSection, ComparisonResult, MergeResult
+from ..errors import DocumentNotFoundError
+from .document_storage import DocumentStorage, ensure_dir
+from .text_tools import TextAnalyzer
 
 
 class DocumentWriterTool:
     """A tool for managing document content with versioning and organization."""
 
-    def __init__(self, storage_dir: str = "documents"):
-        """Initialize the document writer tool.
-
-        Args:
-            storage_dir: Directory to store documents
-        """
+    def __init__(
+        self, storage_dir: str = "documents", openai_client: Optional[OpenAI] = None
+    ):
+        """Initialize the document writer tool."""
         self.storage_dir = storage_dir
         ensure_dir(storage_dir)
         self.storage = DocumentStorage(storage_dir)
         self.documents: Dict[str, DocumentContent] = {}
+        self.text_analyzer = TextAnalyzer(openai_client=openai_client)
         self._load_existing_documents()
-        self.openai = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-    def _load_existing_documents(self) -> None:
-        """Load any existing documents from storage."""
+    def _load_existing_documents(self):
+        """Load existing documents from storage."""
         for doc_id in self.storage.list_documents():
-            if doc := self.storage.load_document(doc_id):
-                self.documents[doc_id] = doc
+            try:
+                self.documents[doc_id] = self.storage.load_document(doc_id)
+            except Exception:
+                # Skip corrupted documents
+                continue
 
-    def create_document(
-        self, doc_id: str, metadata: List[DocumentMetdataItem]
-    ) -> DocumentContent:
-        """Creates a new empty document."""
+    def create_document(self, doc_id: str) -> DocumentContent:
+        """Creates a new empty document and initializes it in storage.
+
+        Args:
+            doc_id: Unique identifier for the document
+
+        Returns:
+            The created document
+        """
         now = datetime.now()
-        doc = DocumentContent(sections={}, created_at=now, last_modified=now)
+        doc = DocumentContent(
+            sections={}, metadata=[], created_at=now, last_modified=now, version=0
+        )
         self.documents[doc_id] = doc
         self.storage.save_document(doc_id, doc)
         return doc
 
-    def get_document(self, doc_id: str) -> Optional[DocumentContent]:
-        """Retrieves a document by ID."""
-        if doc := self.documents.get(doc_id):
-            return doc
-        raise DocumentNotFoundError(f"Document {doc_id} not found")
+    def get_document(self, doc_id: str) -> DocumentContent:
+        """Retrieves a document by ID.
 
-    def _calculate_similarity(self, text1: str, text2: str) -> float:
-        """Calculate similarity ratio between two text strings.
-
-        Uses a combination of simple ratio and token-based similarity.
-        """
-        # Clean and normalize texts
-        text1 = re.sub(r"\s+", " ", text1.lower().strip())
-        text2 = re.sub(r"\s+", " ", text2.lower().strip())
-
-        # Get base similarity
-        similarity = SequenceMatcher(None, text1, text2).ratio()
-
-        # Get token-based similarity
-        tokens1 = set(text1.split())
-        tokens2 = set(text2.split())
-        token_similarity = len(tokens1.intersection(tokens2)) / max(
-            len(tokens1), len(tokens2)
-        )
-
-        # Return weighted average
-        return (similarity * 0.6) + (token_similarity * 0.4)
-
-    def _find_most_relevant_section(
-        self, doc: DocumentContent, title: str, content: str
-    ) -> Tuple[Optional[str], float]:
-        """Find the most relevant existing section for the given content.
+        Args:
+            doc_id: Document identifier
 
         Returns:
-            Tuple of (section_id, similarity_score)
+            The requested document
+
+        Raises:
+            DocumentNotFoundError: If document does not exist
         """
-        best_match = None
-        best_score = 0.0
+        if doc_id not in self.documents:
+            raise DocumentNotFoundError(f"Document {doc_id} not found")
+        return self.documents[doc_id]
 
-        for section_id, section in doc.sections.items():
-            # Calculate similarity scores
-            title_similarity = self._calculate_similarity(section.title, title)
-            content_similarity = self._calculate_similarity(section.content, content)
+    def _compare_sections_with_ai(
+        self, section1: DocumentSection, section2: DocumentSection
+    ) -> Tuple[float, str]:
+        """Compare two sections using AI.
 
-            # Weight title more heavily than content
-            combined_score = (title_similarity * 0.4) + (content_similarity * 0.6)
+        Args:
+            section1: First section to compare
+            section2: Second section to compare
 
-            if (
-                combined_score > best_score and combined_score > 0.7
-            ):  # Threshold for similarity
-                best_score = combined_score
-                best_match = section_id
+        Returns:
+            Tuple of (similarity score, explanation)
+        """
+        result = self.text_analyzer.compare_sections(section1, section2)
+        return result.similarity_score, result.explanation
 
-        return best_match, best_score
+    def _merge_sections_with_ai(
+        self, section1: DocumentSection, section2: DocumentSection
+    ) -> Tuple[str, str]:
+        """Merge two sections using AI.
 
-    def update_section(
-        self,
-        doc_id: str,
-        title: str,
-        content: str,
-    ) -> DocumentSection:
+        Args:
+            section1: First section to merge
+            section2: Second section to merge
+
+        Returns:
+            Tuple of (merged title, merged content)
+        """
+        result = self.text_analyzer.merge_sections(section1, section2)
+        return result.merged_title, result.merged_content
+
+    def update_section(self, doc_id: str, title: str, content: str) -> DocumentSection:
         """Updates or creates a document section.
 
-        If section_id is None, attempts to find the most relevant existing section.
-        """
-        if not (doc := self.get_document(doc_id)):
-            doc = self.create_document(doc_id, metadata=[])
+        Args:
+            doc_id: Document identifier
+            title: Section title
+            content: Section content in markdown format
 
+        Returns:
+            The updated or created section
+        """
+        doc = (
+            self.get_document(doc_id)
+            if doc_id in self.documents
+            else self.create_document(doc_id)
+        )
         now = datetime.now()
 
-        # If no section_id provided, try to find the most relevant section
+        # Try to find matching section
+        matched_section_id, similarity = self.text_analyzer.find_most_relevant_section(
+            doc, title, content
+        )
+        new_section = DocumentSection(title=title, content=content, last_modified=now)
 
-        matched_section_id, _ = self._find_most_relevant_section(doc, title, content)
-        section_id = matched_section_id or f"section_{len(doc.sections) + 1}"
-        context_tokens = len(content.split())
-
-        new_title = title
-        new_content = content
-
-        try:
-            existing_section = doc.sections.get(section_id)
-            response = self.openai.chat.completions.create(
-                model="gpt-4o",
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "You are given 2 sections, combine them into one section. ",
-                    },
-                    {
-                        "role": "user",
-                        "content": f"""
-                        New Section Title: {title}
-                        New Section Content: {content}
-
-                        Existing Section Title: {existing_section.title if existing_section else 'N/A'}
-                        Existing Section Content: {existing_section.content if existing_section else 'N/A'}
-                        
-                        Please combine the new section with the existing section, if it exists.
-                        If the existing section is not relevant, create a new section with the new content.
-                        Provide only the new section content without any additional information.
-                        """,
-                    },
-                ],
+        if matched_section_id and similarity > 0.7:
+            # Found similar section, use structured comparison
+            existing_section = doc.sections[matched_section_id]
+            similarity_score, explanation = self._compare_sections_with_ai(
+                new_section, existing_section
             )
 
-            new_content = response.choices[0].message.content
-            new_title = title if not existing_section else existing_section.title
-        except Exception as e:
-            print(f"LLM error when combining sections: {e}")
-            new_content = content
-            new_title = title
-
-        if section_id in doc.sections:
-            section = doc.sections[section_id]
-            section.title = new_title
-            section.content = new_content
-            section.last_modified = now
-            section.version += 1
-            section.context_tokens = context_tokens
+            if similarity_score > 0.8:
+                # Sections are very similar, merge them
+                merged_title, merged_content = self._merge_sections_with_ai(
+                    new_section, existing_section
+                )
+                new_version = existing_section.version + 1
+                existing_section.title = merged_title
+                existing_section.content = merged_content
+                existing_section.last_modified = now
+                existing_section.version = new_version
+                section = existing_section
+            else:
+                # Create new section
+                section_id = f"section_{len(doc.sections) + 1}"
+                new_section.context_tokens = len(content.split())
+                new_section.version = 0
+                doc.sections[section_id] = new_section
+                section = new_section
         else:
-            section = DocumentSection(
-                title=new_title,
-                content=new_content,
-                last_modified=now,
-                context_tokens=context_tokens,
-            )
-            doc.sections[section_id] = section
+            # No similar section found, create new one
+            section_id = f"section_{len(doc.sections) + 1}"
+            new_section.context_tokens = len(content.split())
+            new_section.version = 0
+            doc.sections[section_id] = new_section
+            section = new_section
 
+        # Update document metadata
         doc.last_modified = now
         doc.version += 1
 
+        # Save document and markdown
         self.storage.save_document(doc_id, doc)
+        self._write_markdown(doc_id, doc)
+
         return section
 
-    def organize_sections(self, doc_id: str, max_tokens: int = 2048) -> List[str]:
-        """Organizes document sections to fit within token limits."""
-        if not (doc := self.get_document(doc_id)):
-            raise DocumentNotFoundError(f"Document {doc_id} not found")
+    def _write_markdown(self, doc_id: str, doc: DocumentContent):
+        """Write document content to markdown file.
 
-        sections = list(doc.sections.items())
-        organized: List[str] = []
-        current_tokens = 0
-        current_section = ""
+        Args:
+            doc_id: Document identifier
+            doc: Document to write
+        """
+        markdown_path = Path(self.storage_dir) / f"{doc_id}.md"
 
-        for section_id, section in sections:
-            if current_tokens + section.context_tokens > max_tokens:
-                if current_section:
-                    organized.append(current_section)
-                current_section = section_id
-                current_tokens = section.context_tokens
-            else:
-                current_section = section_id
-                current_tokens += section.context_tokens
+        content = []
+        for section in doc.sections.values():
+            # Add section title as h2
+            content.append(f"\n## {section.title}\n")
+            # Add section content, preserving existing markdown
+            content.append(f"{section.content}\n")
 
-        if current_section:
-            organized.append(current_section)
-
-        return organized
-
-    def list_documents(self) -> Dict[str, Dict[str, str]]:
-        """Lists all available documents with their metadata."""
-        return self.storage.list_documents()
+        markdown_path.write_text("\n".join(content))
