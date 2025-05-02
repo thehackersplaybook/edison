@@ -63,7 +63,7 @@ class EdisonTools:
         """
 
         async def create_document_handler(
-            ctx: RunContextWrapper[Any], args: CreateDocumentArgs
+            ctx: RunContextWrapper[Any], args: str
         ) -> str:
             """Handles creation of new documents.
 
@@ -80,16 +80,14 @@ class EdisonTools:
                 Exception: If document creation fails
             """
             try:
-                parsed = args
+                parsed = CreateDocumentArgs.model_validate_json(args)
                 tool = DocumentWriterTool(storage_dir="documents")
-                tool.create_document(parsed.doc_id, metadata=None)
+                tool.create_document(parsed.doc_id, metadata=[])
                 return f"Created document {parsed.doc_id}."
             except Exception as e:
                 return f"Failed to create document: {str(e)}"
 
-        async def update_section_handler(
-            ctx: RunContextWrapper[Any], args: UpdateSectionArgs
-        ) -> str:
+        async def update_section_handler(ctx: RunContextWrapper[Any], args: str) -> str:
             """Handles updating document sections.
 
             Updates or creates a section within an existing document with new content
@@ -106,21 +104,19 @@ class EdisonTools:
                 Exception: If section update fails
             """
             try:
-                parsed = args
+                parsed = UpdateSectionArgs.model_validate_json(args)
                 tool = DocumentWriterTool(storage_dir="documents")
                 tool.update_section(
                     doc_id=parsed.doc_id,
                     title=parsed.title,
                     content=parsed.content,
                 )
-                return (
-                    f"Updated section {parsed.section_id} in document {parsed.doc_id}."
-                )
+                return f"Updated section {parsed.title} in document {parsed.doc_id}."
             except Exception as e:
                 return f"Failed to update section: {str(e)}"
 
         async def organize_sections_handler(
-            ctx: RunContextWrapper[Any], args: OrganizeSectionsArgs
+            ctx: RunContextWrapper[Any], args: str
         ) -> List[str]:
             """Handles organizing document sections.
 
@@ -138,14 +134,14 @@ class EdisonTools:
                 Exception: If section organization fails
             """
             try:
-                parsed = args
+                parsed = OrganizeSectionsArgs.model_validate_json(args)
                 tool = DocumentWriterTool(storage_dir="documents")
                 return tool.organize_sections(parsed.doc_id, max_tokens=4096)
             except Exception as e:
                 return f"Failed to organize sections: {str(e)}"
 
         async def list_documents_handler(
-            ctx: RunContextWrapper[Any], args: ListDocumentsArgs
+            ctx: RunContextWrapper[Any], args: str
         ) -> Dict[str, Dict[str, str]]:
             """Handles listing available documents.
 
@@ -164,6 +160,7 @@ class EdisonTools:
                 Exception: If document listing fails
             """
             try:
+                parsed = ListDocumentsArgs.model_validate_json(args)
                 tool = DocumentWriterTool(storage_dir="documents")
                 return tool.list_documents()
             except Exception as e:
@@ -175,24 +172,28 @@ class EdisonTools:
                 description="Creates a new empty document with metadata",
                 params_json_schema=CreateDocumentArgs.model_json_schema(),
                 on_invoke_tool=create_document_handler,
+                strict_json_schema=True,
             ),
             FunctionTool(
                 name="update_section",
                 description="Updates or creates a section in a document",
                 params_json_schema=UpdateSectionArgs.model_json_schema(),
                 on_invoke_tool=update_section_handler,
+                strict_json_schema=True,
             ),
             FunctionTool(
                 name="organize_sections",
                 description="Organizes document sections to fit within token limits",
                 params_json_schema=OrganizeSectionsArgs.model_json_schema(),
                 on_invoke_tool=organize_sections_handler,
+                strict_json_schema=True,
             ),
             FunctionTool(
                 name="list_documents",
                 description="Lists all available documents with their metadata",
                 params_json_schema=ListDocumentsArgs.model_json_schema(),
                 on_invoke_tool=list_documents_handler,
+                strict_json_schema=True,
             ),
             WebSearchTool(),
         ]
