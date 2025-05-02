@@ -36,19 +36,19 @@ class DocumentStorage:
     """
 
     def __init__(self, storage_dir: str):
-        """Initialize storage with directory path.
-
-        Creates the storage directory if it doesn't exist and prepares
-        the system for document storage operations.
+        """Initialize document storage.
 
         Args:
-            storage_dir: Base directory path for document storage
+            storage_dir: Path to directory for document storage
 
         Raises:
             StorageError: If storage directory cannot be created or accessed
         """
-        self.storage_dir = Path(storage_dir)
-        ensure_dir(str(self.storage_dir))
+        try:
+            self.storage_dir = Path(storage_dir)
+            ensure_dir(str(self.storage_dir))
+        except (OSError, PermissionError) as e:
+            raise StorageError(f"Failed to initialize storage at {storage_dir}: {e}")
 
     def _sanitize_doc_id(self, doc_id: str) -> str:
         """Sanitize document ID for filesystem safety.
@@ -88,7 +88,6 @@ class DocumentStorage:
         """
         try:
             doc_path = self._get_doc_path(doc_id)
-            # Convert to serializable format
             doc_dict = {
                 "sections": {
                     id: {
@@ -148,7 +147,6 @@ class DocumentStorage:
             with doc_path.open("r") as f:
                 doc_dict = json.load(f)
 
-            # Convert back to DocumentContent with safe datetime parsing
             sections = {
                 id: DocumentSection(
                     title=section["title"],
@@ -210,7 +208,6 @@ class DocumentStorage:
                 try:
                     with doc_path.open("r") as f:
                         doc_dict = json.load(f)
-                        # Convert metadata list to dict for backwards compatibility
                         metadata_dict = {}
                         for item in doc_dict.get("metadata", []):
                             if (
@@ -221,7 +218,6 @@ class DocumentStorage:
                                 metadata_dict[item["key"]] = item["value"]
                         documents[doc_id] = metadata_dict
                 except Exception as e:
-                    # Skip invalid documents but continue processing others
                     continue
 
             return documents

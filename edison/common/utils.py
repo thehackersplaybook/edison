@@ -8,16 +8,26 @@ Author: Aditya Patange (https://www.github.com/AdiPat)
 import os
 from typing import Optional
 from uuid import uuid4
+from ..errors import StorageError
 
 
 def ensure_dir(path: str) -> None:
-    """Ensure a directory exists, creating it if necessary.
+    """Ensure directory exists, creating it if necessary.
 
     Args:
         path: Directory path to ensure exists
+
+    Raises:
+        StorageError: If directory cannot be created or accessed
     """
-    if not os.path.exists(path):
-        os.makedirs(path)
+    if ":" in path and not path.startswith("/dev"):
+        raise StorageError(f"Invalid path containing colon: {path}")
+
+    try:
+        if not os.path.exists(path):
+            os.makedirs(path)
+    except (OSError, PermissionError) as e:
+        raise StorageError(f"Failed to create directory {path}: {e}")
 
 
 def sanitize_filename(filename: str) -> str:

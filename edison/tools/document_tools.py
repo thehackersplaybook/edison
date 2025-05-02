@@ -18,9 +18,14 @@ class DocumentWriterTool:
     def __init__(
         self, storage_dir: str = "documents", openai_client: Optional[OpenAI] = None
     ):
-        """Initialize the document writer tool."""
-        self.storage_dir = storage_dir
+        """Initialize the document writer tool.
+
+        Args:
+            storage_dir: Path to directory for storing documents and their metadata
+            openai_client: Optional OpenAI client for AI-assisted operations
+        """
         ensure_dir(storage_dir)
+        self.storage_dir = storage_dir
         self.storage = DocumentStorage(storage_dir)
         self.documents: Dict[str, DocumentContent] = {}
         self.text_analyzer = TextAnalyzer(openai_client=openai_client)
@@ -32,7 +37,6 @@ class DocumentWriterTool:
             try:
                 self.documents[doc_id] = self.storage.load_document(doc_id)
             except Exception:
-                # Skip corrupted documents
                 continue
 
     def create_document(self, doc_id: str) -> DocumentContent:
@@ -109,6 +113,7 @@ class DocumentWriterTool:
         Returns:
             The updated or created section
         """
+
         doc = (
             self.get_document(doc_id)
             if doc_id in self.documents
@@ -120,40 +125,37 @@ class DocumentWriterTool:
         matched_section_id, similarity = self.text_analyzer.find_most_relevant_section(
             doc, title, content
         )
-        new_section = DocumentSection(title=title, content=content, last_modified=now)
 
         if matched_section_id and similarity > 0.7:
-            # Found similar section, use structured comparison
+            # Found similar section, try to merge
             existing_section = doc.sections[matched_section_id]
-            similarity_score, explanation = self._compare_sections_with_ai(
-                new_section, existing_section
+            temp_section = DocumentSection(
+                title=title, content=content, last_modified=now, version=0
             )
 
-            if similarity_score > 0.8:
-                # Sections are very similar, merge them
-                merged_title, merged_content = self._merge_sections_with_ai(
-                    new_section, existing_section
-                )
-                new_version = existing_section.version + 1
-                existing_section.title = merged_title
-                existing_section.content = merged_content
-                existing_section.last_modified = now
-                existing_section.version = new_version
-                section = existing_section
-            else:
-                # Create new section
-                section_id = f"section_{len(doc.sections) + 1}"
-                new_section.context_tokens = len(content.split())
-                new_section.version = 0
-                doc.sections[section_id] = new_section
-                section = new_section
+            # Try to merge the sections using AI
+            merge_result = self.text_analyzer.merge_sections(
+                existing_section, temp_section
+            )
+            section = DocumentSection(
+                title=merge_result.merged_title,
+                content=merge_result.merged_content,
+                last_modified=now,
+                version=existing_section.version + 1,
+                context_tokens=len(merge_result.merged_content.split()),
+            )
+            doc.sections[matched_section_id] = section
         else:
-            # No similar section found, create new one
+            # Create new section
             section_id = f"section_{len(doc.sections) + 1}"
-            new_section.context_tokens = len(content.split())
-            new_section.version = 0
-            doc.sections[section_id] = new_section
-            section = new_section
+            section = DocumentSection(
+                title=title,
+                content=content,
+                last_modified=now,
+                version=0,
+                context_tokens=len(content.split()),
+            )
+            doc.sections[section_id] = section
 
         # Update document metadata
         doc.last_modified = now

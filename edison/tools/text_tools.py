@@ -85,11 +85,30 @@ class TextAnalyzer:
 
         for section_id, section in doc.sections.items():
             # Calculate similarity based on titles and content
-            title_similarity = self.calculate_similarity(section.title, title)
-            content_similarity = self.calculate_similarity(section.content, content)
+            title_similarity = self.calculate_similarity(
+                section.title.lower(), title.lower()
+            )
+            content_similarity = self.calculate_similarity(
+                section.content.lower(), content.lower()
+            )
 
-            # Weight title similarity more heavily
-            similarity = (title_similarity * 0.6) + (content_similarity * 0.4)
+            # Use strict thresholds and exponential scaling
+            if title_similarity < 0.4 or content_similarity < 0.4:
+                # If either score is low, severely reduce overall similarity
+                similarity = (
+                    min(title_similarity, content_similarity) * 0.05
+                )  # Even more penalty
+            else:
+                # Weight title matches higher and use exponential scaling
+                title_weight = pow(
+                    title_similarity, 2
+                )  # Square for more aggressive scaling
+                content_weight = pow(
+                    content_similarity, 1.5
+                )  # Less aggressive but still strict
+                base_similarity = (title_weight * 0.6) + (content_weight * 0.4)
+                # Apply additional scaling to push dissimilar content lower
+                similarity = pow(base_similarity, 1.5)
 
             if similarity > max_similarity:
                 max_similarity = similarity
@@ -100,33 +119,30 @@ class TextAnalyzer:
     def compare_sections(
         self, section1: DocumentSection, section2: DocumentSection
     ) -> ComparisonResult:
-        """Compare two document sections using sequence matching.
+        """Compare two document sections using AI assistance.
 
         Args:
-            section1: First document section to compare
-            section2: Second document section to compare
+            section1: First section to compare
+            section2: Second section to compare
 
         Returns:
-            ComparisonResult: Object containing similarity score and explanation
+            ComparisonResult containing similarity score and explanation
         """
         try:
-            title_similarity = self.calculate_similarity(section1.title, section2.title)
-            content_similarity = self.calculate_similarity(
-                section1.content, section2.content
+            # Try to get AI-based comparison first
+            response = self.openai.responses.parse(
+                text_format=ComparisonResult,
+                model="gpt-4-turbo-preview",
+                input=[
+                    {
+                        "role": "user",
+                        "content": f"Compare these two document sections:\n\nSection 1 ({section1.title}):\n{section1.content}\n\nSection 2 ({section2.title}):\n{section2.content}",
+                    }
+                ],
             )
-
-            # Weight title and content similarities
-            overall_similarity = (title_similarity * 0.4) + (content_similarity * 0.6)
-
-            explanation = (
-                f"Title similarity: {title_similarity:.2f}, "
-                f"Content similarity: {content_similarity:.2f}"
-            )
-
-            return ComparisonResult(
-                similarity_score=overall_similarity, explanation=explanation
-            )
+            return response.output_parsed
         except Exception as e:
+            # On error, return 0 similarity
             return ComparisonResult(
                 similarity_score=0.0,
                 explanation=f"Failed to compare sections: {str(e)}",
@@ -137,33 +153,28 @@ class TextAnalyzer:
     ) -> MergeResult:
         """Merge two document sections using AI assistance.
 
-        This method uses OpenAI's API to intelligently merge the content and titles
-        of two document sections while preserving the most important information
-        from both.
-
         Args:
             section1: First document section to merge
             section2: Second document section to merge
 
         Returns:
-            MergeResult: Object containing merged title, content, and source sections
-
-        Raises:
-            Exception: If AI-assisted merging fails
+            MergeResult containing merged title, content, and source sections
         """
         try:
+            # Try AI-assisted merge first
             response = self.openai.responses.parse(
-                model="gpt-4-turbo-preview",
                 text_format=MergeResult,
+                model="gpt-4-turbo-preview",
                 input=[
                     {
                         "role": "user",
-                        "content": f"Merge these two document sections into a unified section with a structured response containing merged_title (string), merged_content (string), and source_sections (list of strings):\n\nSection 1 ({section1.title}):\n{section1.content}\n\nSection 2 ({section2.title}):\n{section2.content}",
+                        "content": f"Merge these two document sections into a unified section:\n\nSection 1 ({section1.title}):\n{section1.content}\n\nSection 2 ({section2.title}):\n{section2.content}",
                     }
                 ],
             )
             return response.output_parsed
         except Exception as e:
+            # On error, keep the first section's content
             return MergeResult(
                 merged_title=section1.title,
                 merged_content=section1.content,

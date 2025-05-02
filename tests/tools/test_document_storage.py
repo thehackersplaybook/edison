@@ -1,15 +1,13 @@
+"""Tests for document storage operations."""
+
 import json
 import pytest
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import Mock, patch, mock_open
+from unittest.mock import patch
 
 from edison.tools.document_storage import DocumentStorage
-from edison.tools.document_tools import (
-    DocumentContent,
-    DocumentSection,
-    DocumentMetdataItem,
-)
+from edison.models import DocumentContent, DocumentSection, DocumentMetdataItem
 from edison.errors import StorageError, StorageIOError
 
 
@@ -130,7 +128,7 @@ def test_list_documents_with_content(storage, sample_document):
     assert len(docs) == 2
     assert "doc1" in docs
     assert "doc2" in docs
-    assert all(doc["author"] == "test" for doc in docs.values())
+    assert all("author" in doc and doc["author"] == "test" for doc in docs.values())
 
 
 def test_list_documents_with_corrupted_file(storage, sample_document):
@@ -189,7 +187,7 @@ def test_load_document_with_missing_dates(storage):
                 "context_tokens": 100,
             }
         },
-        "metadata": {},
+        "metadata": [],
         "created_at": None,
         "last_modified": None,
         "version": 1,
