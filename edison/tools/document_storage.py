@@ -21,6 +21,7 @@ from datetime import datetime
 from pathlib import Path
 from .document_tools import DocumentContent, DocumentSection
 from ..errors import StorageError, StorageIOError
+from ..models import DocumentMetdataItem
 
 
 class DocumentStorage:
@@ -52,6 +53,13 @@ class DocumentStorage:
         except Exception as e:
             raise StorageError(f"Failed to initialize storage directory: {e}")
 
+    def _sanitize_doc_id(self, doc_id: str) -> str:
+        """Sanitize document ID for filesystem safety.
+
+        Replaces unsafe characters with underscores to ensure valid filenames.
+        """
+        return "".join(c if c.isalnum() or c in "-_ " else "_" for c in doc_id)
+
     def _get_doc_path(self, doc_id: str) -> Path:
         """Get full path for document storage.
 
@@ -64,7 +72,8 @@ class DocumentStorage:
         Returns:
             Path object representing the document's storage location
         """
-        return self.storage_dir / f"{doc_id}.json"
+        safe_id = self._sanitize_doc_id(doc_id)
+        return self.storage_dir / f"{safe_id}.json"
 
     def save_document(self, doc_id: str, document: DocumentContent) -> None:
         """Saves document content to storage.
@@ -80,24 +89,35 @@ class DocumentStorage:
             StorageIOError: If document cannot be saved due to IO errors
             or serialization issues
         """
-        doc_path = self._get_doc_path(doc_id)
-
         try:
+            doc_path = self._get_doc_path(doc_id)
             # Convert to serializable format
             doc_dict = {
                 "sections": {
                     id: {
                         "title": section.title,
                         "content": section.content,
-                        "last_modified": section.last_modified.isoformat(),
+                        "last_modified": (
+                            section.last_modified.isoformat()
+                            if section.last_modified
+                            else None
+                        ),
                         "version": section.version,
                         "context_tokens": section.context_tokens,
                     }
-                    for id, section in document.sections.items()
+                    for id, section in (document.sections or {}).items()
                 },
-                "metadata": document.metadata,
-                "created_at": document.created_at.isoformat(),
-                "last_modified": document.last_modified.isoformat(),
+                "metadata": [
+                    {"key": item.key, "value": item.value} for item in document.metadata
+                ],
+                "created_at": (
+                    document.created_at.isoformat() if document.created_at else None
+                ),
+                "last_modified": (
+                    document.last_modified.isoformat()
+                    if document.last_modified
+                    else None
+                ),
                 "version": document.version,
             }
 
@@ -131,24 +151,42 @@ class DocumentStorage:
             with doc_path.open("r") as f:
                 doc_dict = json.load(f)
 
-            # Convert back to DocumentContent
+            # Convert back to DocumentContent with safe datetime parsing
             sections = {
                 id: DocumentSection(
                     title=section["title"],
                     content=section["content"],
-                    last_modified=datetime.fromisoformat(section["last_modified"]),
+                    last_modified=(
+                        datetime.fromisoformat(section["last_modified"])
+                        if section.get("last_modified")
+                        else None
+                    ),
                     version=section["version"],
-                    context_tokens=section["context_tokens"],
+                    context_tokens=section.get("context_tokens", 0),
                 )
-                for id, section in doc_dict["sections"].items()
+                for id, section in doc_dict.get("sections", {}).items()
             }
+
+            metadata = [
+                DocumentMetdataItem(key=item["key"], value=item["value"])
+                for item in (doc_dict.get("metadata") or [])
+                if isinstance(item, dict) and "key" in item and "value" in item
+            ]
 
             return DocumentContent(
                 sections=sections,
-                metadata=doc_dict["metadata"],
-                created_at=datetime.fromisoformat(doc_dict["created_at"]),
-                last_modified=datetime.fromisoformat(doc_dict["last_modified"]),
-                version=doc_dict["version"],
+                metadata=metadata,
+                created_at=(
+                    datetime.fromisoformat(doc_dict["created_at"])
+                    if doc_dict.get("created_at")
+                    else None
+                ),
+                last_modified=(
+                    datetime.fromisoformat(doc_dict["last_modified"])
+                    if doc_dict.get("last_modified")
+                    else None
+                ),
+                version=doc_dict.get("version", 1),
             )
         except Exception as e:
             raise StorageIOError(f"Failed to load document {doc_id}: {e}")
@@ -175,7 +213,16 @@ class DocumentStorage:
                 try:
                     with doc_path.open("r") as f:
                         doc_dict = json.load(f)
-                        documents[doc_id] = doc_dict["metadata"]
+                        # Convert metadata list to dict for backwards compatibility
+                        metadata_dict = {}
+                        for item in doc_dict.get("metadata", []):
+                            if (
+                                isinstance(item, dict)
+                                and "key" in item
+                                and "value" in item
+                            ):
+                                metadata_dict[item["key"]] = item["value"]
+                        documents[doc_id] = metadata_dict
                 except Exception as e:
                     # Skip invalid documents but continue processing others
                     continue
