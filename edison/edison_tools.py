@@ -44,11 +44,8 @@ class EdisonTools:
         """Initializes the Edison tools collection."""
         self._tools: List[FunctionTool] = self._init_document_tools()
         self._tools_map: Dict[ToolType, FunctionTool] = {
-            ToolType.CREATE_DOCUMENT: self._tools[0],
-            ToolType.UPDATE_SECTION: self._tools[1],
-            ToolType.ORGANIZE_SECTIONS: self._tools[2],
-            ToolType.LIST_DOCUMENTS: self._tools[3],
-            ToolType.WEB_SEARCH: self._tools[4],
+            ToolType.UPDATE_SECTION: self._tools[0],
+            ToolType.WEB_SEARCH: self._tools[1],
         }
 
     def _init_document_tools(self) -> List[FunctionTool]:
@@ -61,31 +58,6 @@ class EdisonTools:
         Returns:
             List[FunctionTool]: Collection of initialized document management tools
         """
-
-        async def create_document_handler(
-            ctx: RunContextWrapper[Any], args: str
-        ) -> str:
-            """Handles creation of new documents.
-
-            Creates a new document with specified metadata in the given storage location.
-
-            Args:
-                ctx: Runtime context wrapper containing execution state
-                args: JSON string containing document creation parameters
-
-            Returns:
-                str: Success message with document ID and metadata or error message
-
-            Raises:
-                Exception: If document creation fails
-            """
-            try:
-                parsed = CreateDocumentArgs.model_validate_json(args)
-                tool = DocumentWriterTool(storage_dir="documents")
-                tool.create_document(parsed.doc_id, metadata=[])
-                return f"Created document {parsed.doc_id}."
-            except Exception as e:
-                return f"Failed to create document: {str(e)}"
 
         async def update_section_handler(ctx: RunContextWrapper[Any], args: str) -> str:
             """Handles updating document sections.
@@ -115,84 +87,12 @@ class EdisonTools:
             except Exception as e:
                 return f"Failed to update section: {str(e)}"
 
-        async def organize_sections_handler(
-            ctx: RunContextWrapper[Any], args: str
-        ) -> List[str]:
-            """Handles organizing document sections.
-
-            Reorganizes document sections to ensure they fit within specified token limits
-            while maintaining logical flow and content integrity.
-
-            Args:
-                ctx: Runtime context wrapper containing execution state
-                args: JSON string containing organization parameters
-
-            Returns:
-                List[str]: List of organized section IDs or error message
-
-            Raises:
-                Exception: If section organization fails
-            """
-            try:
-                parsed = OrganizeSectionsArgs.model_validate_json(args)
-                tool = DocumentWriterTool(storage_dir="documents")
-                return tool.organize_sections(parsed.doc_id, max_tokens=4096)
-            except Exception as e:
-                return f"Failed to organize sections: {str(e)}"
-
-        async def list_documents_handler(
-            ctx: RunContextWrapper[Any], args: str
-        ) -> Dict[str, Dict[str, str]]:
-            """Handles listing available documents.
-
-            Retrieves a list of all available documents and their associated metadata
-            from the specified storage location.
-
-            Args:
-                ctx: Runtime context wrapper containing execution state
-                args: JSON string containing listing parameters
-
-            Returns:
-                Dict[str, Dict[str, str]]: Dictionary of document IDs and their metadata
-                                         or error message
-
-            Raises:
-                Exception: If document listing fails
-            """
-            try:
-                parsed = ListDocumentsArgs.model_validate_json(args)
-                tool = DocumentWriterTool(storage_dir="documents")
-                return tool.list_documents()
-            except Exception as e:
-                return f"Failed to list documents: {str(e)}"
-
         return [
-            FunctionTool(
-                name="create_document",
-                description="Creates a new empty document with metadata",
-                params_json_schema=CreateDocumentArgs.model_json_schema(),
-                on_invoke_tool=create_document_handler,
-                strict_json_schema=True,
-            ),
             FunctionTool(
                 name="update_section",
                 description="Updates or creates a section in a document",
                 params_json_schema=UpdateSectionArgs.model_json_schema(),
                 on_invoke_tool=update_section_handler,
-                strict_json_schema=True,
-            ),
-            FunctionTool(
-                name="organize_sections",
-                description="Organizes document sections to fit within token limits",
-                params_json_schema=OrganizeSectionsArgs.model_json_schema(),
-                on_invoke_tool=organize_sections_handler,
-                strict_json_schema=True,
-            ),
-            FunctionTool(
-                name="list_documents",
-                description="Lists all available documents with their metadata",
-                params_json_schema=ListDocumentsArgs.model_json_schema(),
-                on_invoke_tool=list_documents_handler,
                 strict_json_schema=True,
             ),
             WebSearchTool(),

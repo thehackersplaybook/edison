@@ -182,16 +182,11 @@ class ToolType(Enum):
     """Enumeration of available tool types in the Edison system.
 
     Each tool type represents a specialized function with specific capabilities:
-        CREATE_DOCUMENT: Creates new documents with metadata
         UPDATE_SECTION: Updates or creates document sections
-        ORGANIZE_SECTIONS: Reorganizes sections within token limits
-        LIST_DOCUMENTS: Lists available documents and metadata
+        WEB_SEARCH: Performs web searches for information retrieval
     """
 
-    CREATE_DOCUMENT = "create_document"
     UPDATE_SECTION = "update_section"
-    ORGANIZE_SECTIONS = "organize_sections"
-    LIST_DOCUMENTS = "list_documents"
     WEB_SEARCH = "web_search"
 
 
