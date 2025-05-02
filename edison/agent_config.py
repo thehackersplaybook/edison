@@ -96,10 +96,10 @@ AGENT_CONFIGS: Dict[AgentType, AgentConfig] = {
             5. Keep sections organized with clear transitions.
 
             Use the following tools:
-            - Create Document: To create a new document with metadata.
+            - Create Document: To create a new document.
             - Update Section: To update or create sections within the document.
             - Organize Sections: To reorganize sections within the document while maintaining token limits.
-            - List Documents: To list available documents and their metadata.
+            - List Documents: To list available documents.
         """,
         model=DEFAULT_LLM_MODEL,
         tools=[
