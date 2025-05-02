@@ -45,9 +45,7 @@ class DocumentWriterTool:
     ) -> DocumentContent:
         """Creates a new empty document."""
         now = datetime.now()
-        doc = DocumentContent(
-            sections={}, metadata=metadata, created_at=now, last_modified=now
-        )
+        doc = DocumentContent(sections={}, created_at=now, last_modified=now)
         self.documents[doc_id] = doc
         self.storage.save_document(doc_id, doc)
         return doc
@@ -118,7 +116,7 @@ class DocumentWriterTool:
         If section_id is None, attempts to find the most relevant existing section.
         """
         if not (doc := self.get_document(doc_id)):
-            raise DocumentNotFoundError(f"Document {doc_id} not found")
+            doc = self.create_document(doc_id, metadata=[])
 
         now = datetime.now()
 
