@@ -106,7 +106,7 @@ class EdisonDeepResearch:
             return False
         return True
 
-    async def deep_stream_async(
+    async def deep_stream_async_v1(
         self,
         query: str,
         verbose: bool = DEFAULT_VERBOSE,
@@ -181,3 +181,20 @@ class EdisonDeepResearch:
             Printer.print_red_message(f"Error during deep research: {e}")
             traceback.print_exc()
             yield error_msg
+
+    async def deep_stream_async(
+        self, query: str, verbose: bool = DEFAULT_VERBOSE, version="v1"
+    ) -> AsyncGenerator[str, None]:
+        """Perform deep research on the given query and return a stream of results."""
+        version_to_method_map = {
+            "v1": self.deep_stream_async_v1,
+        }
+        supported_versions = version_to_method_map.keys()
+        if not version:
+            version = "v1"
+        if version not in version_to_method_map:
+            raise ValueError(
+                f"Unsupported version: {version}. Supported versions: {supported_versions}"
+            )
+        method = version_to_method_map[version]
+        return await method(query, verbose)
