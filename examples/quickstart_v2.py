@@ -13,7 +13,7 @@ async def main():
     """
     researcher = EdisonDeepResearch()
     query = input("Enter your research query: ")
-    result = await researcher.deep_stream_async(query=query, verbose=True)
+    result = await researcher.deep_stream_async(query=query, verbose=True, version="v2")
 
     async for chunk in result:
         pass
