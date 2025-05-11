@@ -58,6 +58,22 @@ class QnaItem(BaseModel):
     answer: str
 
 
+class ExpandedQnaItem(BaseModel):
+    """Container for an expanded QnA item.
+
+    This class represents a single question and its corresponding answer,
+    along with additional context.
+
+    Attributes:
+        question (str): The question text.
+        answer (str): The answer text.
+        context (str): Additional context related to the question and answer.
+    """
+
+    qna_pair: QnaItem
+    expansion: str
+
+
 class QnaAgentOutput(BaseModel):
     """Output container for the Questioning Agent's results.
 

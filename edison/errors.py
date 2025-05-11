@@ -20,3 +20,15 @@ class StorageIOError(StorageError):
     """Raised when storage I/O operations fail."""
 
     pass
+
+
+class EdisonError(Exception):
+    """Base exception for Edison operations."""
+
+    pass
+
+
+class QnaEngineError(EdisonError):
+    """Base exception for QnaEngine operations."""
+
+    pass

@@ -14,7 +14,7 @@ from openai.types.responses import ResponseTextDeltaEvent
 from agents.result import RunResultStreaming
 from agents import set_default_openai_key, Runner, ItemHelpers
 from .edison_agents import EdisonAgents
-from .models import EdisonApiKeyConfig, AgentType
+from .models import EdisonApiKeyConfig, AgentType, QnaAgentOutput
 from .common.utils import generate_document_id
 from .common.printer import Printer
 
@@ -182,12 +182,48 @@ class EdisonDeepResearch:
             traceback.print_exc()
             yield error_msg
 
+    async def deep_stream_async_v2(
+        self,
+        query: str,
+        verbose: bool = DEFAULT_VERBOSE,
+    ) -> AsyncGenerator[str, None]:
+        """Perform deep research on the given query and return a stream of results."""
+        # Placeholder for future version 2 implementation
+        qna_agent = self.agents.get_agent(agent_type=AgentType.QNA_AGENT)
+
+        qna_agent_result = await Runner.run(
+            qna_agent,
+            max_turns=self.DEFAULT_MAX_TURNS,
+            input=f"Generate 5 questions for: '{query}'",
+        )
+
+        questions_output: QnaAgentOutput = qna_agent_result.final_output
+        qna_pairs = questions_output.qna_pairs
+
+        if not qna_pairs or len(qna_pairs) == 0:
+            error_msg = (
+                f"❌ Deep research failed for query='{query}'. Please try again later."
+            )
+            Printer.print_red_message(f"Error during deep research: {error_msg}")
+            yield error_msg
+            return
+
+        qna_pairs_composite = "\n".join(
+            [f"Q: {pair.question}\nA: {pair.answer}" for pair in qna_pairs]
+        )
+        message = f"🤖 Generated questions: {qna_pairs_composite}"
+
+        if verbose:
+            Printer.print_blue_message(message)
+        yield f"{message}\n"
+
     async def deep_stream_async(
         self, query: str, verbose: bool = DEFAULT_VERBOSE, version="v1"
     ) -> AsyncGenerator[str, None]:
         """Perform deep research on the given query and return a stream of results."""
         version_to_method_map = {
             "v1": self.deep_stream_async_v1,
+            "v2": self.deep_stream_async_v2,
         }
         supported_versions = version_to_method_map.keys()
         if not version:
@@ -197,4 +233,4 @@ class EdisonDeepResearch:
                 f"Unsupported version: {version}. Supported versions: {supported_versions}"
             )
         method = version_to_method_map[version]
-        return await method(query, verbose)
+        return method(query, verbose)

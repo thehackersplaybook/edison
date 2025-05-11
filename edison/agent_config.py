@@ -37,6 +37,7 @@ AGENT_CONFIGS: Dict[AgentType, AgentConfig] = {
             You will be provided with a query and you need to perform the task.
         """,
         model=DEFAULT_QNA_MODEL,
+        tools=[ToolType.WEB_SEARCH],
     ),
     AgentType.QNA_AGENT: AgentConfig(
         name="edison_qna_agent",
