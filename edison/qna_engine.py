@@ -8,6 +8,7 @@ from .common.printer import Printer
 
 
 class QnaEngine:
+    DEFAULT_TOPIC_DETECTION = True
 
     def __init__(self, edison_agents: EdisonAgents, verbose: bool = False):
         """Initialize the QnaEngine with the provided Edison agents.
@@ -58,6 +59,7 @@ class QnaEngine:
     async def expand_qna_pairs(
         self,
         qna_pairs: List[QnaItem],
+        topic_detection: bool = DEFAULT_TOPIC_DETECTION,
     ) -> List[ExpandedQnaItem]:
         """Expand the Q&A pairs with additional information.
 
@@ -75,13 +77,22 @@ class QnaEngine:
                     f"❌ Q&A pairs provided for expansion are undefined. Please provide valid Q&A pairs."
                 )
 
+            prompt = f"""
+                Expand the following Q&A pairs with additional information.
+                Q&A Pairs: {qna_pairs}
+            """
+            if topic_detection:
+                prompt += f"""
+                    Please also include any relevant topics or keywords that can help in understanding the context of the Q&A pairs.
+                """
+
+            agent_query = f"""
+                {prompt}
+                Q&A Pairs: {qna_pairs}
+            """
+
             expanded_qna_pairs: List[ExpandedQnaItem] = []
             for qna_pair in qna_pairs:
-                agent_query = f"""
-                    Expand the following Q&A pair with additional information.
-                    Q: {qna_pair.question}
-                    A: {qna_pair.answer}
-                """
                 result = await Runner.run(
                     tasks_agent,
                     input=agent_query,
