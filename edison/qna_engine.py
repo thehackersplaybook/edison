@@ -109,3 +109,30 @@ class QnaEngine:
                 Printer.print_red_message(error_msg)
                 traceback.print_exc()
             raise QnaEngineError(f"Unknown error during QnA engine processing: {e}.")
+
+    async def run(
+        self,
+        query: str,
+        topic_detection: bool = DEFAULT_TOPIC_DETECTION,
+    ) -> List[ExpandedQnaItem]:
+        """Run the Q&A engine with the provided query and topic detection flag.
+
+        Args:
+            query (str): The input query for which Q&A pairs are to be generated.
+            topic_detection (bool): Flag indicating whether to perform topic detection.
+
+        Returns:
+            List[ExpandedQnaItem]: A list of expanded Q&A pairs generated from the query.
+        """
+        try:
+            qna_pairs = await self.generate_qna_pairs(query)
+            expanded_qna_pairs = await self.expand_qna_pairs(qna_pairs, topic_detection)
+            return expanded_qna_pairs
+        except Exception as e:
+            error_msg = (
+                f"❌ QnA engine failed for query='{query}'. Please try again later."
+            )
+            if self.verbose:
+                Printer.print_red_message(error_msg)
+                traceback.print_exc()
+            raise QnaEngineError(f"Unknown error during QnA engine processing: {e}.")
