@@ -1,85 +1,171 @@
-# Edison: Deep Research for Developers.
+# Edison
 
-> 🚨 This project is educational, experimental and under active development. Use with caution.
+Edison is a powerful Deep Research Intelligence package for Python that provides AI-powered research capabilities through both programmatic APIs and command-line interfaces.
 
-Simple, effective &amp; powerful Deep Research capabilities in Python.
+## 🚀 Features
 
----
+- **Dual Interface**: Both programmatic Python API and command-line interface.
+- **Multiple Report Types**: Basic (2-5 pages) and Detailed (10-15 pages) research reports.
+- **Multiple Output Formats**: JSON, Markdown, and Text.
+- **Context Integration**: Include additional context from files.
+- **Flexible Configuration**: Customizable models, temperature, and output options.
+- **Professional Output**: Well-structured, comprehensive research reports.
 
-## Overview
-
-Edison is a Python package with enables application developers integrate deep research capabilities within 10 lines of code. Edison is state-of-the-art, and uses the R3 Pattern (Reflect, Revise, Regenerate) to provide high-quality reports for given natural language queries.
-
----
-
-## Usage
-
-- [Install Python 3 and above.](https://www.python.org/downloads/)
-
-- Install the edison package.
+## 📦 Installation
 
 ```bash
+# Install Edison
 pip install edison
+
+# Or install in development mode with dev dependencies
+pip install -e .[dev]
 ```
 
-- Add a `.env` file with FireCrawl and OpenAI keys in the root folder of your script.
+## 🛠 Quick Start
 
-```text
-OPENAI_API_KEY=your-openai-api-key
-FIRECRAWL_API_KEY=your-firecrawl-api-key
+### Command Line Interface
+
+```bash
+# Set your OpenAI API key (option 1: environment variable)
+export OPENAI_API_KEY="your-api-key-here"
+
+# Or use an environment file (option 2: .env file)
+echo "OPENAI_API_KEY=your-api-key-here" > .env
+
+# Generate a basic research report
+edison --prompt "Research the latest trends in artificial intelligence" --basic
+
+# Generate a detailed report with custom settings
+edison --prompt "Deep analysis of renewable energy technologies" \
+       --detailed \
+       --model gpt-4 \
+       --temperature 0.5 \
+       --format markdown \
+       --output-file energy_report.md
+
+# Include additional context and use environment file
+edison --prompt "Market analysis" \
+       --context background_data.txt \
+       --env .env \
+       --detailed \
+       --format json
 ```
 
-- Write your first deep research program.
+### Python API
 
 ```python
-# app.py
-from edison import EdisonDeepResearch
+import os
+from edison import Edison
 
-researcher = EdisonDeepResearch()
+# Initialize Edison
+edison = Edison(api_key=os.getenv("OPENAI_API_KEY"))
 
-topic = "The advancements in Machine Learning between 2010 to 2025."
+# Generate a research report
+report = edison.generate_research_report(
+    prompt="Research quantum computing trends",
+    mode="basic",
+    temperature=0.7
+)
 
-report = researcher.deep(topic=topic, depth=0.5)
-
-print(f"Report on {topic}")
 print(report)
 ```
 
-- Run the program.
+## 📋 CLI Reference
+
+### Commands
 
 ```bash
-python app.py
+# Both interfaces work identically
+edison --prompt "Your research question"
+python -m edison --prompt "Your research question"
 ```
 
+### Options
+
+| Option          | Description                            | Default           | Required |
+| --------------- | -------------------------------------- | ----------------- | -------- |
+| `--prompt`      | Research prompt or question            | -                 | ✅       |
+| `--basic`       | Generate basic report (2-5 pages)      | ✅ (default)      | ❌       |
+| `--detailed`    | Generate detailed report (10-15 pages) | ❌                | ❌       |
+| `--model`       | LLM model to use                       | `gpt-4`           | ❌       |
+| `--temperature` | Creativity setting (0.0-2.0)           | `0.7`             | ❌       |
+| `--format`      | Output format (json/markdown/text)     | `markdown`        | ❌       |
+| `--output-file` | Save to file instead of stdout         | -                 | ❌       |
+| `--context`     | Additional context file (.txt/.md)     | -                 | ❌       |
+| `--api-key`     | OpenAI API key                         | `$OPENAI_API_KEY` | ✅       |
+
+### Examples
+
+```bash
+# Basic research report
+edison --prompt "AI trends in healthcare" --basic
+
+# Detailed analysis with custom model
+edison --prompt "Climate change impact analysis" \
+       --detailed \
+       --model gpt-4 \
+       --temperature 0.3
+
+# JSON output to file
+edison --prompt "Market research for EVs" \
+       --basic \
+       --format json \
+       --output-file market_analysis.json
+
+# Include context from file with environment file
+edison --prompt "Product strategy analysis" \
+       --context company_data.md \
+       --env .env \
+       --detailed \
+       --output-file strategy_report.md
+```
+
+## 📚 Documentation
+
+- **[Usage Guide](docs/USAGE.md)** - Comprehensive usage instructions and examples.
+- **[Development Guide](docs/DEVELOPMENT.md)** - Contributing and development setup.
+
+## 📖 API Documentation
+
+### Edison Class
+
+```python
+class Edison:
+    def __init__(self, api_key: str, model: str = "gpt-4")
+
+    def generate_text_response(
+        self,
+        prompt: str,
+        temperature: float = 0.7,
+        system_prompt: Optional[str] = None,
+        max_tokens: Optional[int] = None
+    ) -> str
+
+    def generate_research_report(
+        self,
+        prompt: str,
+        mode: str = "basic",
+        temperature: float = 0.7,
+        context: Optional[str] = None
+    ) -> str
+```
+
+## 🤝 Contributing
+
+1. Fork the repository.
+2. Create a feature branch.
+3. Make your changes.
+4. Run `make validate` to ensure quality.
+5. Submit a pull request.
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🙋‍♂️ Support
+
+For questions, issues, or contributions, please visit our [GitHub repository](https://github.com/thehackersplaybook/edison).
+
 ---
 
-## Motivations & Objectives
-
-- Build a simple and cost-effective deep research solution that's easily integrable.
-- Contribute to a deep research package in Python for which there aren't many alternatives.
-- Support the broader vision of building high-quality knowledge systems at The Hackers Playbook.
-- Contribute to the Python and Open Source Communities with a novel product.
-- Create teaching material for The Hackers Playbook System Design and Programming courses.
-
-## Contributions
-
-We welcome contributions from developers around the globe. The steps to contribute are simple:
-
-- Fork the repository.
-- Create a new branch with your changes.
-- Submit a PR to this repository.
-- Complete the PR review process with our team.
-
----
-
-## 🪪 License
-
-This project is licensed under the **GNU AGPLv3**, with an option for **commercial licensing**.
-
-- ✅ Free to use for open source, education, and public research.
-- 🚫 Commercial users must either:
-  - Open-source their entire codebase under AGPLv3, or
-  - Purchase a commercial license from the author (Aditya Patange aka AdiPat).
-
-To request a commercial license or discuss exceptions, contact:
-**Aditya Patange (AdiPat)** – [contact.adityapatange@gmail.com]
+**Edison - Deep Research Intelligence for Python** 🚀

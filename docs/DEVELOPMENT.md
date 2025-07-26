@@ -163,7 +163,7 @@ edison/
 ├── tests/                  # Test suite
 ├── pyproject.toml         # Single source: packaging, dependencies & tool configuration
 ├── Makefile               # Development automation
-└── DEVELOPMENT.md         # This file
+└── docs/DEVELOPMENT.md    # This file
 ```
 
 ## 🚨 Troubleshooting
