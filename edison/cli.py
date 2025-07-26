@@ -1,0 +1,416 @@
+"""Edison CLI - Command Line Interface for Deep Research Intelligence."""
+
+import argparse
+import json
+import os
+import sys
+from pathlib import Path
+from typing import Optional
+
+from .constants import DEFAULT_LLM_MODEL
+from .edison import Edison
+
+
+def create_parser() -> argparse.ArgumentParser:
+    """Create and configure the argument parser."""
+    parser = argparse.ArgumentParser(
+        prog="edison",
+        description="Edison - Deep Research Intelligence for Python",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  edison --prompt "Research AI trends" --basic
+  edison --prompt "Deep analysis of ML" --detailed --model gpt-4 --format markdown
+  edison --prompt "Market analysis" --context data.txt --output-file report.md
+  edison --prompt "Quick research" --env .env --basic --format json
+  python -m edison --prompt "Quick research" --basic --format json
+        """,
+    )
+
+    # Mode selection (mutually exclusive)
+    mode_group = parser.add_mutually_exclusive_group()
+    mode_group.add_argument(
+        "--basic",
+        action="store_true",
+        help="Generate a basic report (2-5 pages, faster processing)",
+    )
+    mode_group.add_argument(
+        "--detailed",
+        action="store_true",
+        help="Generate a detailed report (10-15 pages, comprehensive analysis)",
+    )
+
+    # Required arguments
+    parser.add_argument(
+        "--prompt",
+        type=str,
+        required=True,
+        help="Initial research prompt or question",
+    )
+
+    # Model configuration
+    parser.add_argument(
+        "--model",
+        type=str,
+        default=DEFAULT_LLM_MODEL,
+        help=f"LLM model to use (default: {DEFAULT_LLM_MODEL})",
+    )
+
+    parser.add_argument(
+        "--temperature",
+        type=float,
+        default=0.7,
+        help="Temperature setting for response creativity (0.0-2.0, default: 0.7)",
+    )
+
+    # Output configuration
+    parser.add_argument(
+        "--format",
+        choices=["json", "markdown", "text"],
+        default="markdown",
+        help="Output format (default: markdown)",
+    )
+
+    parser.add_argument(
+        "--output-file",
+        type=str,
+        help="File to save the output (optional, prints to stdout if not specified)",
+    )
+
+    # Context input
+    parser.add_argument(
+        "--context",
+        type=str,
+        help="Path to additional context file (.txt or .md)",
+    )
+
+    # Environment file
+    parser.add_argument(
+        "--env",
+        type=str,
+        help="Path to environment file (.env) containing API keys and configuration",
+    )
+
+    return parser
+
+
+def load_context_file(context_path: str) -> str:
+    """Load additional context from a file."""
+    try:
+        context_file = Path(context_path)
+        if not context_file.exists():
+            raise FileNotFoundError(f"Context file not found: {context_path}")
+
+        if context_file.suffix.lower() not in [".txt", ".md"]:
+            raise ValueError(f"Context file must be .txt or .md format: {context_path}")
+
+        return context_file.read_text(encoding="utf-8")
+    except Exception as e:
+        print(f"Error loading context file: {e}", file=sys.stderr)
+        sys.exit(1)
+
+
+def generate_basic_report(
+    edison: Edison, prompt: str, context: Optional[str] = None, temperature: float = 0.7
+) -> str:
+    """
+    Generate a basic research report (2-5 pages).
+
+    This is a dummy implementation for now.
+    """
+    print("🔬 Generating basic research report...")
+
+    # Construct the enhanced prompt
+    system_prompt = """You are Edison, an expert research assistant. Generate a concise but comprehensive research report based on the user's prompt. 
+
+The report should be:
+- 2-5 pages in length
+- Well-structured with clear sections
+- Factual and informative
+- Professional in tone
+
+Structure your response with:
+1. Executive Summary
+2. Key Findings
+3. Analysis
+4. Conclusion
+"""
+
+    full_prompt = f"{system_prompt}\n\nUser Request: {prompt}"
+    if context:
+        full_prompt += f"\n\nAdditional Context:\n{context}"
+
+    # TODO: Implement actual research generation with multiple API calls,
+    # web searching, fact checking, etc.
+
+    # For now, return a dummy response
+    return f"""# Research Report: Basic Analysis
+
+## Executive Summary
+This is a basic research report generated for: "{prompt}"
+
+## Key Findings
+- Finding 1: Placeholder research insight
+- Finding 2: Additional analysis point
+- Finding 3: Supporting evidence
+
+## Analysis
+Based on the prompt "{prompt}", preliminary analysis suggests multiple avenues for exploration. This basic report provides an overview of the key concepts and initial insights.
+
+{f"## Additional Context Analysis\nContext provided: {context[:200]}..." if context else ""}
+
+## Conclusion
+This basic report provides a foundation for understanding the topic. For more comprehensive analysis, consider using the --detailed mode.
+
+---
+*Generated by Edison AI Research Assistant*
+*Mode: Basic (2-5 pages)*
+*Model: {edison.model}*
+*Temperature: {temperature}*
+"""
+
+
+def generate_detailed_report(
+    edison: Edison, prompt: str, context: Optional[str] = None, temperature: float = 0.7
+) -> str:
+    """
+    Generate a detailed research report (10-15 pages).
+
+    This is a dummy implementation for now.
+    """
+    print("📚 Generating detailed research report...")
+
+    # TODO: Implement comprehensive research generation with:
+    # - Multiple research phases
+    # - Web search integration
+    # - Cross-referencing
+    # - Detailed analysis
+    # - Citation gathering
+    # - Multi-perspective analysis
+
+    # For now, return a dummy detailed response
+    return f"""# Comprehensive Research Report: Detailed Analysis
+
+## Table of Contents
+1. Executive Summary
+2. Introduction & Background
+3. Methodology
+4. Literature Review
+5. Key Findings & Analysis
+6. Case Studies
+7. Implications & Recommendations
+8. Future Research Directions
+9. Conclusion
+10. References
+
+## 1. Executive Summary
+This comprehensive research report provides an in-depth analysis of: "{prompt}"
+
+### Key Takeaways
+- Major insight 1 with supporting evidence
+- Major insight 2 with detailed analysis
+- Major insight 3 with cross-references
+
+## 2. Introduction & Background
+The research question "{prompt}" requires a multi-faceted approach to fully understand the implications and context.
+
+### Problem Statement
+[Detailed problem analysis would go here]
+
+### Research Objectives
+- Primary objective: Comprehensive analysis
+- Secondary objective: Actionable insights
+- Tertiary objective: Future recommendations
+
+## 3. Methodology
+This report employs a systematic approach combining:
+- Primary source analysis
+- Cross-referential research
+- Multi-perspective evaluation
+- Evidence-based conclusions
+
+## 4. Literature Review
+[Extensive literature review section would be generated here]
+
+## 5. Key Findings & Analysis
+
+### Finding 1: Primary Research Insight
+[Detailed analysis with supporting evidence]
+
+### Finding 2: Secondary Research Insight  
+[In-depth exploration of related concepts]
+
+### Finding 3: Tertiary Research Insight
+[Comprehensive evaluation of implications]
+
+## 6. Case Studies
+[Multiple case studies would be analyzed here]
+
+## 7. Implications & Recommendations
+
+### Short-term Implications
+- Immediate actionable insights
+- Quick implementation strategies
+
+### Long-term Implications
+- Strategic considerations
+- Future planning recommendations
+
+## 8. Future Research Directions
+[Suggestions for continued research]
+
+{f"## 9. Additional Context Integration\nProvided context analysis:\n{context[:500]}..." if context else ""}
+
+## 10. Conclusion
+This detailed analysis of "{prompt}" reveals multiple layers of complexity requiring continued investigation and strategic consideration.
+
+---
+*Generated by Edison AI Research Assistant*
+*Mode: Detailed (10-15 pages)*
+*Model: {edison.model}*
+*Temperature: {temperature}*
+*Total sections: 10*
+*Estimated reading time: 15-20 minutes*
+"""
+
+
+def format_output(content: str, output_format: str) -> str:
+    """Format the output according to the specified format."""
+    if output_format == "json":
+        return json.dumps(
+            {
+                "content": content,
+                "format": "research_report",
+                "generator": "edison",
+                "timestamp": "2024-01-26T21:52:00Z",  # TODO: Use actual timestamp
+            },
+            indent=2,
+        )
+    elif output_format == "text":
+        # Strip markdown formatting for plain text
+        import re
+
+        # Simple markdown to text conversion
+        text = re.sub(r"#{1,6}\s*", "", content)  # Remove headers
+        text = re.sub(r"\*\*(.*?)\*\*", r"\1", text)  # Remove bold
+        text = re.sub(r"\*(.*?)\*", r"\1", text)  # Remove italic
+        text = re.sub(r"`(.*?)`", r"\1", text)  # Remove code
+        return text
+    else:  # markdown (default)
+        return content
+
+
+def save_output(content: str, output_file: str) -> None:
+    """Save content to the specified output file."""
+    try:
+        output_path = Path(output_file)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(content, encoding="utf-8")
+        print(f"✅ Output saved to: {output_file}")
+    except Exception as e:
+        print(f"❌ Error saving output: {e}", file=sys.stderr)
+        sys.exit(1)
+
+
+def load_environment_file(env_file: Optional[str]) -> None:
+    """Load environment variables from a .env file."""
+    if env_file:
+        if not Path(env_file).exists():
+            print(f"❌ Error: Environment file not found: {env_file}", file=sys.stderr)
+            sys.exit(1)
+
+        try:
+            from dotenv import load_dotenv
+
+            load_dotenv(env_file)
+            print(f"📄 Loaded environment from: {env_file}")
+        except ImportError:
+            print(
+                "❌ Error: python-dotenv package required for --env option",
+                file=sys.stderr,
+            )
+            print("   Install with: pip install python-dotenv", file=sys.stderr)
+            sys.exit(1)
+        except Exception as e:
+            print(f"❌ Error loading environment file: {e}", file=sys.stderr)
+            sys.exit(1)
+
+
+def get_api_key() -> str:
+    """Get API key from environment variable."""
+    api_key = os.getenv("OPENAI_API_KEY")
+    if not api_key:
+        print("❌ Error: OpenAI API key required.", file=sys.stderr)
+        print(
+            "   Set OPENAI_API_KEY environment variable or use --env option",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    return api_key
+
+
+def main() -> None:
+    """Main CLI entry point."""
+    parser = create_parser()
+    args = parser.parse_args()
+
+    # Validate temperature range
+    if not 0.0 <= args.temperature <= 2.0:
+        print("❌ Error: Temperature must be between 0.0 and 2.0", file=sys.stderr)
+        sys.exit(1)
+
+    # Default to basic mode if neither basic nor detailed is specified
+    if not args.basic and not args.detailed:
+        args.basic = True
+        print("ℹ️  No mode specified, defaulting to --basic")
+
+    # Load environment file if provided
+    load_environment_file(args.env)
+
+    # Get API key from environment
+    api_key = get_api_key()
+
+    # Load context if provided
+    context = None
+    if args.context:
+        context = load_context_file(args.context)
+        print(f"📄 Loaded context from: {args.context}")
+
+    # Initialize Edison
+    try:
+        edison = Edison(api_key=api_key, model=args.model)
+        print(f"🤖 Initialized Edison with model: {args.model}")
+    except Exception as e:
+        print(f"❌ Error initializing Edison: {e}", file=sys.stderr)
+        sys.exit(1)
+
+    # Generate report based on mode
+    try:
+        if args.basic:
+            content = generate_basic_report(
+                edison, args.prompt, context, args.temperature
+            )
+        else:  # detailed
+            content = generate_detailed_report(
+                edison, args.prompt, context, args.temperature
+            )
+
+        # Format output
+        formatted_content = format_output(content, args.format)
+
+        # Save or print output
+        if args.output_file:
+            save_output(formatted_content, args.output_file)
+        else:
+            print("\n" + "=" * 50)
+            print("EDISON RESEARCH REPORT")
+            print("=" * 50)
+            print(formatted_content)
+
+    except Exception as e:
+        print(f"❌ Error generating report: {e}", file=sys.stderr)
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
