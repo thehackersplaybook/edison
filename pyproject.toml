@@ -1,0 +1,164 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "edison"
+version = "0.0.1"
+description = "A simple, effective and powerful package to integrate Deep Research capabilities in Python."
+readme = "README.md"
+license = "MIT"
+authors = [
+    {name = "Aditya Patange (AdiPat)", email = "contact.adityapatange@gmail.com"}
+]
+maintainers = [
+    {name = "Aditya Patange (AdiPat)", email = "contact.adityapatange@gmail.com"}
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+keywords = ["ai", "research", "openai", "deep-research", "intelligence"]
+requires-python = ">=3.8"
+dependencies = [
+    "python-dotenv>=1.0.1",
+    "pydantic>=2.10.6",
+    "rich>=13.9.4",
+    "openai>=1.61.1",
+    "openai-agents>=0.0.11",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "pytest-mock>=3.10.0",
+    "black>=23.0.0",
+    "isort>=5.12.0",
+    "flake8>=6.0.0",
+    "mypy>=1.0.0",
+    "build>=0.10.0",
+    "twine>=4.0.0",
+    "wheel>=0.40.0",
+]
+docs = [
+    "sphinx>=6.0.0",
+    "sphinx-rtd-theme>=1.2.0",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/thehackersplaybook/edison"
+"Repository" = "https://github.com/thehackersplaybook/edison"
+"Bug Tracker" = "https://github.com/thehackersplaybook/edison/issues"
+"Documentation" = "https://github.com/thehackersplaybook/edison#readme"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["edison*"]
+exclude = ["tests*", "e2e*", "scripts*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--cov=edison",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+    "--cov-report=xml",
+    "--strict-markers",
+    "--disable-warnings",
+]
+markers = [
+    "e2e: marks tests as end-to-end tests",
+    "unit: marks tests as unit tests",
+    "integration: marks tests as integration tests",
+    "slow: marks tests as slow running",
+]
+minversion = "7.0"
+
+[tool.coverage.run]
+source = ["edison"]
+omit = [
+    "*/tests/*",
+    "*/test_*",
+    "setup.py",
+    "*/venv/*",
+    "*/.venv/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
+
+[tool.black]
+line-length = 88
+target-version = ['py38', 'py39', 'py310', 'py311', 'py312']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 88
+known_first_party = ["edison"]
+known_third_party = ["pydantic", "openai", "rich"]
+
+[tool.flake8]
+max-line-length = 88
+extend-ignore = ["E203", "W503", "E501"]
+exclude = [
+    ".git",
+    "__pycache__",
+    "build",
+    "dist",
+    ".venv",
+    "venv",
+    ".eggs",
+    "*.egg",
+]
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+ignore_missing_imports = true
+show_error_codes = true
+exclude = [
+    "build/",
+    "dist/",
+    "tests/",
+] 

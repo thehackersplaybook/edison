@@ -1,4 +1,4 @@
-# Edison: Deep Research
+# Edison: Deep Research for Developers.
 
 > 🚨 This project is educational, experimental and under active development. Use with caution.
 
@@ -72,6 +72,14 @@ We welcome contributions from developers around the globe. The steps to contribu
 
 ---
 
-## License
+## 🪪 License
 
-Edison is distributed under the MIT License. Refer to the [LICENSE](https://github.com/thehackersplaybook/edison/blob/main/LICENSE) file for full details.
+This project is licensed under the **GNU AGPLv3**, with an option for **commercial licensing**.
+
+- ✅ Free to use for open source, education, and public research.
+- 🚫 Commercial users must either:
+  - Open-source their entire codebase under AGPLv3, or
+  - Purchase a commercial license from the author (Aditya Patange aka AdiPat).
+
+To request a commercial license or discuss exceptions, contact:
+**Aditya Patange (AdiPat)** – [contact.adityapatange@gmail.com]

@@ -1,21 +1,43 @@
-MIT License
+Adi Indie License – Dual License Notice.
+Copyright (c) 2025 Aditya Patange (AdiPat).
 
-Copyright (c) 2025 Aditya Patange 
+This software is dual-licensed:
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+1. Open Source License (AGPLv3).
+   This program is free software: you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation, version 3.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+   You should have received a copy of the AGPLv3 License along with this program.  
+   If not, see <https://www.gnu.org/licenses/>.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+   Under AGPLv3, you may:
+
+   - Use, modify, and distribute the software freely.
+   - Use the software commercially, provided you release the entire source code of your application under the AGPLv3.
+   - Offer it as a network-accessible service, as long as the full source code (including modifications and service-side components) is made publicly available.
+
+2. Commercial License.
+   If you do NOT wish to comply with AGPLv3 terms (i.e., you prefer to keep your code closed-source), you must obtain a separate commercial license.
+
+   Commercial licensing is required if:
+
+   - You use this software in a proprietary or closed-source product.
+   - You integrate this software into internal tooling or SaaS products without releasing source code.
+   - You want legal guarantees, support, or licensing flexibility.
+
+   To inquire about a commercial license, contact:
+   📩 adityapatange@gmail.com
+
+3. Author Rights.
+   Only Aditya Patange (AdiPat) retains the authority to:
+
+   - Grant exceptions or alternative licensing.
+   - Modify the licensing terms.
+   - Enforce license violations.
+
+4. Disclaimer of Warranty.
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.  
+   IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+---
+
+A copy of the full GNU AGPLv3 license is included below.
